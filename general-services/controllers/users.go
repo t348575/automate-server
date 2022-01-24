@@ -21,7 +21,7 @@ func RegisterTestController(r *utils.Router, config *config.Config, c UserContro
 }
 
 func (c *UserController) GetUsers(ctx *fiber.Ctx) error {
-	user, err := c.Repo.GetUser(ctx.Context(), 8)
+	user, err := c.Repo.GetUser(ctx.Context(), 1)
 	if err != nil {
 		return err
 	}

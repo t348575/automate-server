@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS userdata.teams
 (
     id bigserial NOT NULL,
     name character varying(128) NOT NULL,
+    organization bigint NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -122,7 +123,7 @@ CREATE TABLE IF NOT EXISTS scripts.script
 );
 
 ALTER TABLE IF EXISTS userdata.teams
-    ADD FOREIGN KEY (id)
+    ADD FOREIGN KEY (organization)
     REFERENCES userdata.organizations (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION

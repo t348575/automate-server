@@ -3,7 +3,7 @@ package repos
 import (
 	"context"
 
-	"github.com/automate/automate-server/general-services/models"
+	models "github.com/automate/automate-server/general-services/models/userdata"
 	"github.com/uptrace/bun"
 )
 
@@ -16,14 +16,14 @@ func NewUserRepo(db *bun.DB) *UserRepo {
 }
 
 func (c *UserRepo) GetUser(ctx context.Context, id int64) (*models.User, error) {
-	var user models.User
+	user := new(models.User)
 
-	err := c.db.NewSelect().Model(&user).Relation("Organization").Where("\"user\".\"id\" = ?", id).Scan(ctx)
+	err := c.db.NewSelect().Model(user).Relation("Organization").Relation("Teams").Where(`"user"."id" = ?`, id).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return &user, nil
+	return user, nil
 }
 
 func (c *UserRepo) AddUser(ctx context.Context, user models.User) (int64, error) {

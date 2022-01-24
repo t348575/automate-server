@@ -35,10 +35,13 @@ func provideOptions() []fx.Option {
 		fx.Provide(utils.GetDefaultRouter),
 		fx.Invoke(models.InitModelRegistrations),
 		fx.Provide(repos.NewOrganizationRepo),
+		fx.Provide(repos.NewTeamRepo),
 		fx.Provide(repos.NewUserRepo),
+		fx.Provide(repos.NewRoleRepo),
 		fx.Provide(providers.GetProviders),
 		fx.Invoke(controllers.RegisterTestController),
 		fx.Invoke(controllers.RegisterAuthController),
+		fx.Invoke(controllers.RegisterRbacController),
 	}
 }
 

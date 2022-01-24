@@ -10,6 +10,7 @@ import (
 
 	"github.com/automate/automate-server/general-services/config"
 	"github.com/automate/automate-server/general-services/models"
+	"github.com/automate/automate-server/general-services/models/userdata"
 	"github.com/automate/automate-server/general-services/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
@@ -92,7 +93,7 @@ func (p *Provider) Callback(c *fiber.Ctx) (models.OAuthUser, error) {
 	details["picture"] = data["picture"]
 	details["locale"] = data["locale"]
 
-	id, err := p.Users.AddUser(c.Context(), models.User{
+	id, err := p.Users.AddUser(c.Context(), userdata.User{
 		Email: data["email"].(string),
 		Name: data["name"].(string),
 		Provider: "google",
