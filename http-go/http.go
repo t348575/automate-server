@@ -22,6 +22,7 @@ func CreateServer(config *config.Config) *fiber.App {
 		WriteTimeout: time.Second * time.Duration(config.GetTimeout()),
 		ProxyHeader: fiber.HeaderXForwardedFor,
 		ReadBufferSize: config.GetReadBufferSize(),
+		BodyLimit: config.GetBodyLimit(),
 	}
 
 	if !config.GetIsProduction() {

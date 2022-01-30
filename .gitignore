@@ -16,3 +16,5 @@ Cargo.lock
 *.pb.go
 keys
 *.fuse_hidden*
+*.log
+**/logs

@@ -12,6 +12,7 @@ type Config struct {
 	Port string `env:"LISTEN_ADDR" envDefault:":3000"`
 	Timeout uint64 `env:"TIMEOUT" envDefault:"10"`
 	ReadBufferSize int `env:"READ_BUFFER_SIZE" envDefault:"4096"`
+	BodyLimit int `env:"BODY_LIMIT" envDefault:"1048576"`
 	AppName string `env:"APP_NAME" envDefault:"Automate"`
 	IsProduction bool `env:"PRODUCTION"`
 	Dsn string `env:"DSN"`
@@ -22,6 +23,16 @@ type Config struct {
 	JwtParsedPublicKey *rsa.PublicKey
 	JwtParsedPrivateKey *rsa.PrivateKey
 	RedirectUri string `env:"REDIRECT_URI"`
+	EmailConfig EmailConfig `envPrefix:"EMAIL_"`
+}
+
+type EmailConfig struct {
+	SplitSize int `env:"SPLIT_SIZE" envDefault:"100"`
+	SmtpHost string `env:"SMTP_HOST"`
+	SmtpPort int `env:"SMTP_PORT" envDefault:"587"`
+	SmtpUser string `env:"SMTP_USER"`
+	SmtpPassword string `env:"SMTP_PASSWORD"`
+	SmtpSkipInsecure bool `env:"SMTP_SKIP_INSECURE" envDefault:"false"`
 }
 
 type AuthProviders struct {
@@ -68,4 +79,8 @@ func (c *Config) GetIsProduction() bool {
 
 func (c *Config) GetCookieKey() string {
 	return c.CookieKey
+}
+
+func (c *Config) GetBodyLimit() int {
+	return c.BodyLimit
 }

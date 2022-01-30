@@ -95,7 +95,7 @@ func authorize(c *fiber.Ctx) error {
 }
 
 func getToken(c *fiber.Ctx) error {
-	req := new(tokenRequest)
+	req := new(utils.TokenRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
 			Error: "invalid_request",

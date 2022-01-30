@@ -16,6 +16,7 @@ type Config struct {
 	Port string `env:"LISTEN_ADDR" envDefault:":3000"`
 	Timeout uint64 `env:"TIMEOUT" envDefault:"10"`
 	ReadBufferSize int `env:"READ_BUFFER_SIZE" envDefault:"4096"`
+	BodyLimit int `env:"BODY_LIMIT" envDefault:"1048576"`
 	AppName string `env:"APP_NAME" envDefault:"Automate OAuth2 Server"`
 	IsProduction bool `env:"PRODUCTION"`
 	Dsn string `env:"DSN"`

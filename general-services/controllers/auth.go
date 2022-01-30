@@ -15,6 +15,7 @@ import (
 
 type AuthController struct {
 	fx.In
+	
 	Providers map[string]providers.Provider
 }
 
@@ -26,6 +27,7 @@ func RegisterAuthController(r *utils.Router, config *config.Config, c AuthContro
 	redirectUri = config.RedirectUri
 
 	r.Get("/auth/:provider/login", c.login)
+	r.Post("/auth/:provider/callback", c.callback)
 	r.Get("/auth/:provider/callback", c.callback)
 	r.Get("/", func(ctx *fiber.Ctx) error {
 		return ctx.SendString("Hello from auth controller")
@@ -38,7 +40,14 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) callback(ctx *fiber.Ctx) error {
-	res, _ := c.Providers[ctx.Params("provider")].Callback(ctx)
+	res, err := c.Providers[ctx.Params("provider")].Callback(ctx)
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "access_denied",
+			"error_description": err.Error(),
+		})
+	}
 	
 	currentRedirectUri := func() string {
 		if ctx.Query("redirect_uri") == "" {

@@ -13,8 +13,29 @@ import (
 
 const authScheme = "Bearer"
 
+var (
+	publicKey rsa.PublicKey
+)
+
+type TokenRequest struct {
+	ClientId string `form:"client_id"`
+	ClientSecret string `form:"client_secret"`
+	Code string `form:"code"`
+}
+
 type Router struct {
 	fiber.Router
+}
+type JwtMiddlewareConfig struct {
+	ReadFrom string
+	Subject string
+	Scopes []string
+}
+
+type ErrorResponse struct {
+	FailedField string
+	Tag         string
+	Value       string
 }
 
 func GetDefaultRouter(app *fiber.App) *Router {
@@ -22,17 +43,8 @@ func GetDefaultRouter(app *fiber.App) *Router {
 	return &Router{ Router: temp }
 }
 
-type JwtMiddlewareConfig struct {
-	PublicKey *rsa.PublicKey
-	ReadFrom string
-	Subject string
-	Scopes []string
-}
-
-type ErrorResponse struct {
-    FailedField string
-    Tag         string
-    Value       string
+func InitSharedConstants(pubKey rsa.PublicKey) {
+	publicKey = pubKey
 }
 
 func Protected(config JwtMiddlewareConfig) fiber.Handler {
@@ -67,7 +79,7 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 			if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
 				return nil, fmt.Errorf("unexpected method: %s", jwtToken.Header["alg"])
 			}
-			return config.PublicKey, nil
+			return &publicKey, nil
 		})
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -78,6 +90,7 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 
 		claims, ok := tok.Claims.(jwt.MapClaims)
 		if ok && tok.Valid {
+			fmt.Println(claims["sub"].(string) + "\t" + config.Subject)
 			if claims["sub"].(string) != config.Subject {
 				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 					"error": "access_denied",
@@ -134,8 +147,8 @@ func SetStateCookie(state string, c *fiber.Ctx) {
 	c.ClearCookie("authstate")
 	c.Cookie(&fiber.Cookie{
 		Name: "authstate",
-		Secure: true,
-		HTTPOnly: true,
+		Secure: false,
+		HTTPOnly: false,
 		Value: state,
 		MaxAge: 60,
 	})

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"html/template"
 	"strings"
 	"time"
 
@@ -180,7 +181,7 @@ func HashPassword(password string) (encodedHash string, err error) {
 func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token, error) {
 	refreshJwt, err := CreateJwt(JwtConfig{
 		User: user,
-		ExpireIn: time.Minute * 70,
+		ExpireIn: time.Minute * 60,
 		Scope: scope,
 		Subject: "refresh",
 		Data: map[string]string{},
@@ -205,5 +206,27 @@ func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token,
 	return &oauth2.Token{
 		AccessToken: accessJwt,
 		RefreshToken: refreshJwt,
+		Expiry: time.Now().Add(time.Minute * 60),
 	}, nil
+}
+
+type String string
+
+func (s String) Format(data map[string]string) (out string, err error) {
+	t := template.Must(template.New("").Parse(string(s)))
+	builder := &strings.Builder{}
+	if err = t.Execute(builder, data); err != nil {
+		return "", err
+	}
+	out = builder.String()
+	return out, nil
+}
+
+func GetFromMapArray(data []map[string]string, key string, value string) int {
+	for i, v := range data {
+		if v[key] == value {
+			return i
+		}
+	}
+	return -1
 }

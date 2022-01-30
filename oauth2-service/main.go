@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 	"database/sql"
 	"encoding/json"
-	defHttp "net/http"
 	"regexp"
 
 	"github.com/automate/automate-server/general-services/config"
@@ -12,7 +11,6 @@ import (
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/filesystem"
 	_ "github.com/lib/pq"
 )
 
@@ -36,7 +34,7 @@ type user struct {
 }
 
 type codeToken struct {
-	Code string
+	Code string `json:"code"`
 }
 
 type tokenResponse struct {
@@ -49,12 +47,6 @@ type userDetails struct {
 	Email string
 	Provider string
 	ProviderDetails string
-}
-
-type tokenRequest struct {
-	ClientId string `form:"client_id"`
-	ClientSecret string `form:"client_secret"`
-	Code string `form:"code"`
 }
 
 type socialTokenRequest struct {
@@ -81,6 +73,7 @@ func main() {
 	c, _ := Parse()
 
 	jwtPublicKey, jwtPrivateKey = parseKeys(c)
+	utils.InitSharedConstants(jwtPublicKey)
 
 	defaultRedirectUri = c.RedirectUri
 	client = c.Clients
@@ -103,20 +96,18 @@ func main() {
 		Timeout: c.Timeout,
 		CookieKey: c.CookieKey,
 		AppName: c.AppName,
+		BodyLimit: c.BodyLimit,
 	})
 
-	app.Use(filesystem.New(filesystem.Config{
-		Root: defHttp.Dir(c.LoginFolderPath),
-		Index: "index.html",
-		Browse: false,
-	}))
+	app.Use(app.Static(c.LoginFolderPath, "index.html"))
 
 	app.Get("/oauth2/authorize", authorize)
 
 	app.Post("/oauth2/token", getToken)
+	
+	app.Get("/oauth2/token", getToken)
 
 	app.Get("/oauth2/userinfo", utils.Protected(utils.JwtMiddlewareConfig{
-		PublicKey: &jwtPublicKey,
 		ReadFrom: "header",
 		Subject: "access",
 		Scopes: []string{"basic"},

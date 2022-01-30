@@ -30,7 +30,11 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Provide(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
+		fx.Invoke(func (config *config.Config) {
+			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
+		}),
 		fx.Provide(config.ProvidePostgres),
+		fx.Provide(config.ProvideSmtp),
 		fx.Provide(http.CreateServer),
 		fx.Provide(utils.GetDefaultRouter),
 		fx.Invoke(models.InitModelRegistrations),
@@ -38,10 +42,12 @@ func provideOptions() []fx.Option {
 		fx.Provide(repos.NewTeamRepo),
 		fx.Provide(repos.NewUserRepo),
 		fx.Provide(repos.NewRoleRepo),
+		fx.Provide(repos.NewJobRepo),
 		fx.Provide(providers.GetProviders),
-		fx.Invoke(controllers.RegisterTestController),
+		fx.Invoke(controllers.RegisterUserController),
 		fx.Invoke(controllers.RegisterAuthController),
 		fx.Invoke(controllers.RegisterRbacController),
+		fx.Invoke(controllers.RegisterEmailController),
 	}
 }
 

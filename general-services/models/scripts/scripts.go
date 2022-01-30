@@ -7,7 +7,7 @@ import (
 )
 
 type Script struct {
-	bun.BaseModel `bun:"scripts.script"`
+	bun.BaseModel `bun:"scripts.scripts"`
 
 	Id int64 `bun:",pk"`
 	Name string

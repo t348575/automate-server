@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/automate/automate-server/general-services/config"
 	"github.com/automate/automate-server/general-services/models"
@@ -35,10 +36,18 @@ func NewEmailProvider(c *config.Config) Provider {
 }
 
 func (p *Provider) Login(c *fiber.Ctx) {
-	state := string(utils.EncodeBase64(utils.GenerateRandomBytes(32)))
+	utils.SetStateCookie(c.Query("state"), c)
 
-	utils.SetStateCookie(state, c)
-	c.Redirect(p.Config.AuthCodeURL(state), fiber.StatusTemporaryRedirect)
+	queries := func() string {
+		temp := c.OriginalURL()[0:]
+		idx := strings.LastIndex(temp, "?")
+		if idx > -1 {
+			return "&" + temp[idx + 1:]
+		}
+		return ""
+	}()
+
+	c.Redirect(p.Config.AuthCodeURL(c.Query("state")) + queries, fiber.StatusTemporaryRedirect)
 }
 
 func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUser, error) {
@@ -72,7 +81,16 @@ func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUse
 }
 
 func (p *Provider) Callback(c *fiber.Ctx) (models.OAuthUser, error) {
-	content, err := p.GetUserInfo(c.Query("state"), c.Query("code"), c.Cookies("authstate"))
+	content, err := p.GetUserInfo(c.Query("state"), func() string {
+		if len(c.Query("code")) != 0 {
+			return c.Query("code")
+		}
+
+		req := new(utils.TokenRequest)
+		c.BodyParser(req)
+
+		return req.Code
+	}(), c.Cookies("authstate"))
 	if err != nil {
 		c.Redirect("/", fiber.StatusTemporaryRedirect)
 		return models.OAuthUser{}, err

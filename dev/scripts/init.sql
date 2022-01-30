@@ -8,6 +8,8 @@ CREATE SCHEMA rbac;
 
 CREATE SCHEMA scripts;
 
+CREATE SCHEMA system;
+
 CREATE TABLE IF NOT EXISTS userdata.organizations
 (
     id bigserial NOT NULL,
@@ -97,28 +99,6 @@ CREATE TABLE IF NOT EXISTS userdata.wallet
     linked_type character varying(8) NOT NULL,
     linked_id bigint NOT NULL,
     value bigint NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS scripts.script
-(
-    id bigserial NOT NULL,
-    name character varying(128) NOT NULL,
-    created_by bigint NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    throttle bigint NOT NULL,
-    max_runs bigint NOT NULL,
-    pause_at jsonb NOT NULL,
-    scale jsonb NOT NULL,
-    logs jsonb NOT NULL,
-    executor_type character varying(8) NOT NULL,
-    max_runtime bigint NOT NULL,
-    step_max_runtime bigint NOT NULL,
-    secrets jsonb NOT NULL,
-    linked_to character varying(8) NOT NULL,
-    linked_id bigint NOT NULL,
-    updated_by bigint NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -216,5 +196,42 @@ ALTER TABLE IF EXISTS rbac.user_team_roles
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
+
+CREATE TABLE IF NOT EXISTS scripts.scripts
+(
+    id bigserial NOT NULL,
+    name character varying(128) NOT NULL,
+    throttle bigint NOT NULL,
+    max_runs bigint NOT NULL,
+    pause_at jsonb NOT NULL,
+    scale jsonb NOT NULL,
+    logs jsonb NOT NULL,
+    executor_type character varying(8) NOT NULL,
+    executor_config jsonb NOT NULL,
+    max_runtime bigint NOT NULL,
+    step_max_runtime bigint NOT NULL,
+    secrets jsonb NOT NULL,
+    linked_type character varying(8) NOT NULL,
+    linked_id bigint NOT NULL,
+    created_by bigint NOT NULL,
+    updated_by bigint NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS system.jobs
+(
+    id bigserial NOT NULL,
+    service character varying(16) NOT NULL,
+    item character varying(16) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    status boolean NOT NULL,
+    done bigint NOT NULL,
+    total bigint NOT NULL,
+    details jsonb NOT NULL,
+    PRIMARY KEY (id)
+);
 
 END;

@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/automate/automate-server/general-services/config"
 	"github.com/automate/automate-server/general-services/repos"
 	"github.com/automate/automate-server/utils-go"
@@ -15,16 +17,29 @@ type UserController struct {
 	Repo *repos.UserRepo
 }
 
-func RegisterTestController(r *utils.Router, config *config.Config, c UserController) {
-	
-	r.Get("/user", c.GetUsers)
+var standardRoute utils.JwtMiddlewareConfig
+
+func init() {
+	standardRoute = utils.JwtMiddlewareConfig {
+		ReadFrom: "header",
+		Subject: "access",
+		Scopes: []string{"basic"},
+	}
 }
 
-func (c *UserController) GetUsers(ctx *fiber.Ctx) error {
-	user, err := c.Repo.GetUser(ctx.Context(), 1)
+func RegisterUserController(r *utils.Router, config *config.Config, c UserController) {
+	
+	r.Get("/users/profile", utils.Protected(standardRoute), c.UserProfile)
+}
+
+func (r *UserController) UserProfile(c *fiber.Ctx) error {
+	user, err := r.Repo.UserProfile(c.Context(), func () int64 {
+		userId, _ := strconv.ParseInt(c.Locals("user").(string), 10, 64)
+		return userId
+	}())
 	if err != nil {
 		return err
 	}
 
-	return ctx.JSON(user)
+	return c.JSON(user)
 }
