@@ -14,17 +14,16 @@ import (
 func ProvidePostgres(config *Config) (*bun.DB, error) {
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(config.Dsn)))
 	db := bun.NewDB(pgdb, pgdialect.New())
-
 	if !config.IsProduction {
-		db.AddQueryHook(bundebug.NewQueryHook())
+		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second * 5)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
 		return nil, err
 	}
-	
+
 	return db, nil
 }

@@ -11,14 +11,14 @@ import (
 
 func authorize(c *fiber.Ctx) error {
 	var (
-		responseType        = c.Query("response_type")
-		clientId            = c.Query("client_id")
-		state 				= c.Query("state")
-		redirectUri         = c.Query("redirect_uri", defaultRedirectUri)
-		scope               = c.Query("scope")
-		username            = c.Query("username")
-		password            = c.Query("password")
-		responseMethod      = c.Query("response_method", "redirect")
+		responseType   = c.Query("response_type")
+		clientId       = c.Query("client_id")
+		state          = c.Query("state")
+		redirectUri    = c.Query("redirect_uri", defaultRedirectUri)
+		scope          = c.Query("scope")
+		username       = c.Query("username")
+		password       = c.Query("password")
+		responseMethod = c.Query("response_method", "redirect")
 	)
 
 	if len(username) == 0 {
@@ -27,14 +27,14 @@ func authorize(c *fiber.Ctx) error {
 
 	if responseType != "code" {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid response_type",
 		})
 	}
 
 	if clientId != client.Id {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid client_id",
 		})
 	}
@@ -46,30 +46,30 @@ func authorize(c *fiber.Ctx) error {
 		err := rows.Scan(&user.Id, &user.Name, &user.Password, &user.Provider)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-				Error: "invalid_request",
+				Error:            "invalid_request",
 				ErrorDescription: "invalid username or password",
 			})
 		}
 
 		if user.Provider != "email" && !user.Password.Valid {
 			return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-				Error: "invalid_request",
+				Error:            "invalid_request",
 				ErrorDescription: "user exists with another provider",
 			})
 		}
 
 		if utils.VerifyHash(password, user.Password.String) {
 			genJwt, err := utils.CreateJwt(utils.JwtConfig{
-				User: user.Id,
-				ExpireIn: time.Minute * 1,
-				Scope: scope,
-				Subject: "authorize",
-				Data: map[string]string{},
+				User:       user.Id,
+				ExpireIn:   time.Minute * 1,
+				Scope:      scope,
+				Subject:    "authorize",
+				Data:       map[string]string{},
 				PrivateKey: &jwtPrivateKey,
 			})
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(OAuthError{
-					Error: "server_error",
+					Error:            "server_error",
 					ErrorDescription: "could not create jwt",
 				})
 			}
@@ -77,18 +77,18 @@ func authorize(c *fiber.Ctx) error {
 			if responseMethod == "redirect" {
 				return c.Redirect(fmt.Sprintf("%s?code=%s&state=%s", redirectUri, genJwt, state), fiber.StatusTemporaryRedirect)
 			} else {
-				return c.Status(fiber.StatusOK).JSON(codeToken { Code: genJwt })
+				return c.Status(fiber.StatusOK).JSON(codeToken{Code: genJwt})
 			}
 
 		} else {
 			return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-				Error: "access_denied",
+				Error:            "access_denied",
 				ErrorDescription: "invalid username or password",
 			})
 		}
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid request parameters",
 		})
 	}
@@ -98,21 +98,21 @@ func getToken(c *fiber.Ctx) error {
 	req := new(utils.TokenRequest)
 	if err := c.BodyParser(req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid request parameters",
 		})
 	}
 
 	if len(req.ClientId) == 0 || len(req.ClientSecret) == 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid request parameters",
 		})
 	}
 
 	if req.ClientId != client.Id && req.ClientSecret != client.Secret {
 		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-			Error: "invalid_request",
+			Error:            "invalid_request",
 			ErrorDescription: "invalid client_id or client_secret",
 		})
 	}
@@ -127,7 +127,7 @@ func getToken(c *fiber.Ctx) error {
 
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
-				Error: "invalid_request",
+				Error:            "invalid_request",
 				ErrorDescription: "could not parse code",
 			})
 		}
@@ -145,14 +145,14 @@ func getToken(c *fiber.Ctx) error {
 			if claims["sub"].(string) != "authorize" {
 				return badCode(c)
 			}
-			
+
 			tokens, err := utils.OAuthJwt(claims["user"].(string), claims["scope"].(string), &jwtPrivateKey)
 			if err != nil {
 				return jwtCreateError(c)
 			}
 
-			return c.Status(fiber.StatusOK).JSON(tokenResponse {
-				AccessToken: tokens.AccessToken,
+			return c.Status(fiber.StatusOK).JSON(tokenResponse{
+				AccessToken:  tokens.AccessToken,
 				RefreshToken: tokens.RefreshToken,
 			})
 		}

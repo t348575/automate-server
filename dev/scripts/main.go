@@ -16,7 +16,7 @@ func GenerateRandomBytes(size uint32) []byte {
 
 func main() {
 	salt := GenerateRandomBytes(16)
-	
+
 	hash := argon2.IDKey([]byte("test"), salt, 3, 64*1024, 2, 32)
 
 	b64Salt := base64.RawStdEncoding.EncodeToString(salt)

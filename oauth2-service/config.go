@@ -13,29 +13,29 @@ import (
 )
 
 type Config struct {
-	Port string `env:"LISTEN_ADDR" envDefault:":3000"`
-	Timeout uint64 `env:"TIMEOUT" envDefault:"10"`
-	ReadBufferSize int `env:"READ_BUFFER_SIZE" envDefault:"4096"`
-	BodyLimit int `env:"BODY_LIMIT" envDefault:"1048576"`
-	AppName string `env:"APP_NAME" envDefault:"Automate OAuth2 Server"`
-	IsProduction bool `env:"PRODUCTION"`
-	Dsn string `env:"DSN"`
-	CookieKey string `env:"COOKIE_KEY"`
-	RedirectUri string `env:"REDIRECT_URI"`
-	Clients Client `envPrefix:"CLIENT_"`
-	JwtKeys JwtKeys `envPrefix:"JWT_"`
-	LoginFolderPath string `env:"LOGIN_FOLDER_PATH"`
-	DefaultPicture string `env:"DEFAULT_PICTURE"`
+	Port            string  `env:"LISTEN_ADDR" envDefault:":3000"`
+	Timeout         uint64  `env:"TIMEOUT" envDefault:"10"`
+	ReadBufferSize  int     `env:"READ_BUFFER_SIZE" envDefault:"4096"`
+	BodyLimit       int     `env:"BODY_LIMIT" envDefault:"1048576"`
+	AppName         string  `env:"APP_NAME" envDefault:"Automate OAuth2 Server"`
+	IsProduction    bool    `env:"PRODUCTION"`
+	Dsn             string  `env:"DSN"`
+	CookieKey       string  `env:"COOKIE_KEY"`
+	RedirectUri     string  `env:"REDIRECT_URI"`
+	Clients         Client  `envPrefix:"CLIENT_"`
+	JwtKeys         JwtKeys `envPrefix:"JWT_"`
+	LoginFolderPath string  `env:"LOGIN_FOLDER_PATH"`
+	DefaultPicture  string  `env:"DEFAULT_PICTURE"`
 }
 
 type Client struct {
-	Id string `env:"ID"`
+	Id     string `env:"ID"`
 	Secret string `env:"SECRET"`
 }
 
 type JwtKeys struct {
 	PrivateKey string `env:"PRIVATE_KEY"`
-	PublicKey string `env:"PUBLIC_KEY"`
+	PublicKey  string `env:"PUBLIC_KEY"`
 }
 
 func (c *Config) GetPort() string {
@@ -75,7 +75,7 @@ func Parse() (*Config, error) {
 }
 
 type OAuthError struct {
-	Error string `json:"error"`
+	Error            string `json:"error"`
 	ErrorDescription string `json:"error_description"`
 }
 

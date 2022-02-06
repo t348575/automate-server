@@ -19,8 +19,8 @@ func GetProviders(c *config.Config, users *repos.UserRepo) map[string]Provider {
 	googleProvider := google.NewGoogleProvider(c, users)
 	emailProvider := email.NewEmailProvider(c)
 
-	return map[string]Provider {
+	return map[string]Provider{
 		"google": &googleProvider,
-		"email": &emailProvider,
+		"email":  &emailProvider,
 	}
 }

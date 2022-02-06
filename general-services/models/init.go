@@ -8,5 +8,6 @@ import (
 
 func InitModelRegistrations(db *bun.DB) {
 	db.RegisterModel((*userdata.TeamToUser)(nil))
-	db.RegisterModel((*rbac.ResourceToRoles)(nil))
+	db.RegisterModel((*rbac.ResourceActionRoles)(nil))
+	db.RegisterModel((*rbac.UserOrganizationRoles)(nil))
 }

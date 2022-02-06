@@ -9,10 +9,10 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.4
 	github.com/rs/zerolog v1.26.1
-	github.com/uptrace/bun v1.0.21
-	github.com/uptrace/bun/dialect/pgdialect v1.0.21
-	github.com/uptrace/bun/driver/pgdriver v1.0.21
-	github.com/uptrace/bun/extra/bundebug v1.0.21
+	github.com/uptrace/bun v1.0.22
+	github.com/uptrace/bun/dialect/pgdialect v1.0.22
+	github.com/uptrace/bun/driver/pgdriver v1.0.22
+	github.com/uptrace/bun/extra/bundebug v1.0.22
 	go.uber.org/fx v1.16.0
 )
 
@@ -46,7 +46,7 @@ require (
 	go.uber.org/dig v1.12.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/crypto v0.0.0-20220112180741-5e0467b6c7ce
+	golang.org/x/crypto v0.0.0-20220126234351-aa10faf2a1f8
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8

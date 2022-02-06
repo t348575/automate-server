@@ -13,6 +13,7 @@ func ProvideSmtp(config *Config) (*mail.SMTPClient, error) {
 	server.Port = config.EmailConfig.SmtpPort
 	server.Username = config.EmailConfig.SmtpUser
 	server.Password = config.EmailConfig.SmtpPassword
+	server.Authentication = mail.AuthLogin
 	server.Encryption = mail.EncryptionSTARTTLS
 	server.TLSConfig = &tls.Config{InsecureSkipVerify: config.EmailConfig.SmtpSkipInsecure}
 	server.SendTimeout = 10 * time.Second

@@ -14,22 +14,25 @@ import (
 )
 
 type Provider struct {
-	Name string
-	Config *oauth2.Config
+	Name        string
+	Config      *oauth2.Config
 	CallbackUrl string
 }
 
+var oauthService string
+
 func NewEmailProvider(c *config.Config) Provider {
-	return Provider {
+	oauthService = c.OAuthService
+	return Provider{
 		Name: "email",
 		Config: &oauth2.Config{
-			RedirectURL: "http://localhost:3000/auth/email/callback",
-			ClientID: c.AuthProviders.EmailClient,
+			RedirectURL:  c.AuthProviders.EmailRedirectUrl,
+			ClientID:     c.AuthProviders.EmailClient,
 			ClientSecret: c.AuthProviders.EmailSecret,
-			Scopes: []string{"basic", "advanced"},
+			Scopes:       []string{"basic", "advanced"},
 			Endpoint: oauth2.Endpoint{
-				AuthURL: "http://localhost:3001/oauth2/authorize",
-				TokenURL: "http://localhost:3001/oauth2/token",
+				AuthURL:  c.OAuthService + "/authorize",
+				TokenURL: c.OAuthService + "/token",
 			},
 		},
 	}
@@ -42,12 +45,12 @@ func (p *Provider) Login(c *fiber.Ctx) {
 		temp := c.OriginalURL()[0:]
 		idx := strings.LastIndex(temp, "?")
 		if idx > -1 {
-			return "&" + temp[idx + 1:]
+			return "&" + temp[idx+1:]
 		}
 		return ""
 	}()
 
-	c.Redirect(p.Config.AuthCodeURL(c.Query("state")) + queries, fiber.StatusTemporaryRedirect)
+	c.Redirect(p.Config.AuthCodeURL(c.Query("state"))+queries, fiber.StatusTemporaryRedirect)
 }
 
 func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUser, error) {
@@ -60,8 +63,8 @@ func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUse
 		return models.OAuthUser{}, errors.New("code exchange failed: " + err.Error())
 	}
 
-	req, err := http.NewRequest("GET", "http://localhost:3001/oauth2/userinfo", nil)
-	req.Header.Set("Authorization", "Bearer "+ token.AccessToken)
+	req, err := http.NewRequest("GET", oauthService+"/userinfo", nil)
+	req.Header.Set("Authorization", "Bearer "+token.AccessToken)
 
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -75,7 +78,7 @@ func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUse
 	}
 
 	return models.OAuthUser{
-		Tokens: token,
+		Tokens:  token,
 		Details: string(contents),
 	}, nil
 }

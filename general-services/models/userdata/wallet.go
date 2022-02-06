@@ -5,8 +5,8 @@ import "github.com/uptrace/bun"
 type Wallet struct {
 	bun.BaseModel `bun:"userdata.wallet"`
 
-	Id uint64 `bun:",pk"`
+	Id         uint64 `bun:",pk"`
 	LinkedType string
-	LinkedId int64
-	Value int64
+	LinkedId   int64
+	Value      int64
 }

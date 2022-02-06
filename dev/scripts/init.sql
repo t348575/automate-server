@@ -47,8 +47,7 @@ CREATE TABLE IF NOT EXISTS userdata.users
 CREATE TABLE IF NOT EXISTS rbac.resource
 (
     id bigserial NOT NULL,
-    resource bigint NOT NULL,
-    resource_type character varying(16) NOT NULL,
+    resource character varying(32) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -77,19 +76,19 @@ CREATE TABLE IF NOT EXISTS rbac.roles
 CREATE TABLE IF NOT EXISTS rbac.resource_actions_roles
 (
     resource_actions_id bigint NOT NULL,
-    roles_id bigint NOT NULL
+    role_id bigint NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS rbac.user_organization_roles
 (
     user_id bigint NOT NULL,
-    roles_id bigint NOT NULL
+    role_id bigint NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS rbac.user_team_roles
 (
     team_id bigint NOT NULL,
-    roles_id bigint NOT NULL,
+    role_id bigint NOT NULL,
     user_id bigint NOT NULL
 );
 
@@ -151,7 +150,7 @@ ALTER TABLE IF EXISTS rbac.resource_actions_roles
 
 
 ALTER TABLE IF EXISTS rbac.resource_actions_roles
-    ADD FOREIGN KEY (roles_id)
+    ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
@@ -167,7 +166,7 @@ ALTER TABLE IF EXISTS rbac.user_organization_roles
 
 
 ALTER TABLE IF EXISTS rbac.user_organization_roles
-    ADD FOREIGN KEY (roles_id)
+    ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
@@ -183,7 +182,7 @@ ALTER TABLE IF EXISTS rbac.user_team_roles
 
 
 ALTER TABLE IF EXISTS rbac.user_team_roles
-    ADD FOREIGN KEY (roles_id)
+    ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
@@ -224,7 +223,7 @@ CREATE TABLE IF NOT EXISTS system.jobs
 (
     id bigserial NOT NULL,
     service character varying(16) NOT NULL,
-    item character varying(16) NOT NULL,
+    item character varying(1) NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL,
     status boolean NOT NULL,
@@ -233,5 +232,71 @@ CREATE TABLE IF NOT EXISTS system.jobs
     details jsonb NOT NULL,
     PRIMARY KEY (id)
 );
+
+CREATE TABLE IF NOT EXISTS system.verify_email
+(
+    user_id bigint NOT NULL,
+    code character varying(64) NOT NULL,
+    expiry timestamp without time zone NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS userdata.user_organization_roles
+(
+    user_id bigint NOT NULL,
+    role_id bigint NOT NULL
+);
+
+ALTER TABLE IF EXISTS userdata.user_organization_roles
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.user_organization_roles
+    ADD FOREIGN KEY (role_id)
+    REFERENCES rbac.roles (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+ALTER TABLE IF EXISTS system.verify_email
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+INSERT INTO rbac.actions(action) VALUES
+    ('CREATE'),
+    ('READ'),
+    ('UPDATE'),
+    ('DELETE');
+
+INSERT INTO rbac.resource(resource) VALUES
+    ('GENERAL_METADATA'),
+    ('RESTRICTED_METADATA'),
+    ('INVITE'),
+    ('USER'),
+    ('ROLE'),
+    ('TEAM'),
+    ('SCRIPT');
+
+
+INSERT INTO rbac.resource_actions(resource_id, actions_id)
+    SELECT r.id, a.id FROM rbac.resource r, rbac.actions a;
+
+INSERT INTO rbac.roles(name) VALUES
+    ('ORG_ADMIN');
+
+INSERT INTO rbac.resource_actions_roles(resource_actions_id, role_id)
+    SELECT ra.id, 1 FROM rbac.resource_actions ra WHERE ra.resource_id <= 5;
+
+/* REMOVE IN PRODUCTION */
+
+INSERT INTO userdata.users(name, email, provider, provider_details, password, verified, organization) VALUES
+    ('Joseph Kanichai', 'kjosephsubash@gmail.com', 'email', '{"locale": "en-US","picture": "https://iupac.org/wp-content/uploads/2018/05/default-avatar.png"}',
+    '$argon2id$v=19$m=65536,t=3,p=2$pVz5ubMpzehLSq/4D82/Vw$eFQQuWGjSspJjQnAyjm0Q7ii6puCW/w9P25+WZDFq9A', true, null);
 
 END;

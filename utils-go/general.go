@@ -8,7 +8,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"html/template"
 	"strings"
 	"time"
 
@@ -51,7 +50,7 @@ func ParseFlags() bool {
 	envFile := flag.String("env", "", ".env file path")
 
 	flag.Parse()
-	
+
 	if err := godotenv.Load(func() string {
 		if len(*envFile) > 0 {
 			return *envFile
@@ -61,7 +60,7 @@ func ParseFlags() bool {
 	}()); err != nil {
 		log.Panic().Err(err).Msg("Could not load .env file")
 	}
-	
+
 	return !*devMode
 }
 
@@ -75,11 +74,11 @@ func IsInList(item string, list *[]string) int {
 }
 
 type JwtConfig struct {
-	User string
-	ExpireIn time.Duration
-	Scope string
-	Subject string
-	Data map[string]string
+	User       string
+	ExpireIn   time.Duration
+	Scope      string
+	Subject    string
+	Data       map[string]string
 	PrivateKey *rsa.PrivateKey
 }
 
@@ -92,7 +91,7 @@ func CreateJwt(c JwtConfig) (string, error) {
 		"iat":   now.Unix(),
 		"nbf":   now.Unix(),
 		"sub":   c.Subject,
-		"exp":   now.Add(time.Second * c.ExpireIn).Unix(),
+		"exp":   now.Add(c.ExpireIn).Unix(),
 	}).SignedString(c.PrivateKey)
 
 	if err != nil {
@@ -180,11 +179,11 @@ func HashPassword(password string) (encodedHash string, err error) {
 
 func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token, error) {
 	refreshJwt, err := CreateJwt(JwtConfig{
-		User: user,
-		ExpireIn: time.Minute * 60,
-		Scope: scope,
-		Subject: "refresh",
-		Data: map[string]string{},
+		User:       user,
+		ExpireIn:   time.Minute * 60,
+		Scope:      scope,
+		Subject:    "refresh",
+		Data:       map[string]string{},
 		PrivateKey: jwtPrivateKey,
 	})
 	if err != nil {
@@ -192,11 +191,11 @@ func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token,
 	}
 
 	accessJwt, err := CreateJwt(JwtConfig{
-		User: user,
-		ExpireIn: time.Minute * 60,
-		Scope: scope,
-		Subject: "access",
-		Data: map[string]string{},
+		User:       user,
+		ExpireIn:   time.Minute * 60,
+		Scope:      scope,
+		Subject:    "access",
+		Data:       map[string]string{},
 		PrivateKey: jwtPrivateKey,
 	})
 	if err != nil {
@@ -204,22 +203,17 @@ func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token,
 	}
 
 	return &oauth2.Token{
-		AccessToken: accessJwt,
+		AccessToken:  accessJwt,
 		RefreshToken: refreshJwt,
-		Expiry: time.Now().Add(time.Minute * 60),
+		Expiry:       time.Now().Add(time.Minute * 60),
 	}, nil
 }
 
-type String string
-
-func (s String) Format(data map[string]string) (out string, err error) {
-	t := template.Must(template.New("").Parse(string(s)))
-	builder := &strings.Builder{}
-	if err = t.Execute(builder, data); err != nil {
-		return "", err
+func Format(in string, data map[string]string) string {
+	for k, v := range data {
+		in = strings.Replace(string(in), k, v, -1)
 	}
-	out = builder.String()
-	return out, nil
+	return in
 }
 
 func GetFromMapArray(data []map[string]string, key string, value string) int {

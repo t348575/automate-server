@@ -15,7 +15,7 @@ type RbacController struct {
 }
 
 func RegisterRbacController(r *utils.Router, config *config.Config, c RbacController) {
-	
+
 	r.Get("/role", c.GetRole)
 }
 

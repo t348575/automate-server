@@ -17,12 +17,12 @@ import (
 
 func CreateServer(config *config.Config) *fiber.App {
 	fiberConfig := fiber.Config{
-		AppName: config.GetAppName(),
-		ReadTimeout: time.Second * time.Duration(config.GetTimeout()),
-		WriteTimeout: time.Second * time.Duration(config.GetTimeout()),
-		ProxyHeader: fiber.HeaderXForwardedFor,
+		AppName:        config.GetAppName(),
+		ReadTimeout:    time.Second * time.Duration(config.GetTimeout()),
+		WriteTimeout:   time.Second * time.Duration(config.GetTimeout()),
+		ProxyHeader:    fiber.HeaderXForwardedFor,
 		ReadBufferSize: config.GetReadBufferSize(),
-		BodyLimit: config.GetBodyLimit(),
+		BodyLimit:      config.GetBodyLimit(),
 	}
 
 	if !config.GetIsProduction() {
@@ -30,11 +30,11 @@ func CreateServer(config *config.Config) *fiber.App {
 	}
 
 	app := fiber.New(fiberConfig)
-	
+
 	app.Use(encryptcookie.New(encryptcookie.Config{
 		Key: config.GetCookieKey(),
 	}))
-	
+
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
 		StackTraceHandler: func(c *fiber.Ctx, e interface{}) {

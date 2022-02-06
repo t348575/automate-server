@@ -19,24 +19,24 @@ import (
 )
 
 type Provider struct {
-	Name string
-	Config *oauth2.Config
-	CallbackUrl string
-	Users *repos.UserRepo
+	Name          string
+	Config        *oauth2.Config
+	CallbackUrl   string
+	Users         *repos.UserRepo
 	JwtPrivateKey *rsa.PrivateKey
 }
 
 func NewGoogleProvider(c *config.Config, users *repos.UserRepo) Provider {
-	return Provider {
+	return Provider{
 		Name: "google",
 		Config: &oauth2.Config{
-			RedirectURL: "http://localhost:3000/auth/google/callback",
-			ClientID: c.AuthProviders.GoogleClient,
+			RedirectURL:  c.AuthProviders.GoogleRedirectUrl,
+			ClientID:     c.AuthProviders.GoogleClient,
 			ClientSecret: c.AuthProviders.GoogleSecret,
-			Scopes: []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
-			Endpoint: google.Endpoint,
+			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
+			Endpoint:     google.Endpoint,
 		},
-		Users: users,
+		Users:         users,
 		JwtPrivateKey: c.JwtParsedPrivateKey,
 	}
 }
@@ -71,7 +71,7 @@ func (p *Provider) GetUserInfo(state, code, stateCookie string) (models.OAuthUse
 	}
 
 	return models.OAuthUser{
-		Tokens: token,
+		Tokens:  token,
 		Details: string(contents),
 	}, nil
 }
@@ -93,12 +93,12 @@ func (p *Provider) Callback(c *fiber.Ctx) (models.OAuthUser, error) {
 	details["picture"] = data["picture"]
 	details["locale"] = data["locale"]
 
-	id, err := p.Users.AddUser(c.Context(), userdata.User{
-		Email: data["email"].(string),
-		Name: data["name"].(string),
-		Provider: "google",
+	id, err := p.Users.AddSocialUser(c.Context(), userdata.User{
+		Email:           data["email"].(string),
+		Name:            data["name"].(string),
+		Provider:        "google",
 		ProviderDetails: details,
-		Verified: true,
+		Verified:        true,
 	})
 	if err != nil {
 		return models.OAuthUser{}, err

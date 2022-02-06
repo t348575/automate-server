@@ -15,7 +15,7 @@ import (
 
 type AuthController struct {
 	fx.In
-	
+
 	Providers map[string]providers.Provider
 }
 
@@ -44,11 +44,11 @@ func (c *AuthController) callback(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "access_denied",
+			"error":             "access_denied",
 			"error_description": err.Error(),
 		})
 	}
-	
+
 	currentRedirectUri := func() string {
 		if ctx.Query("redirect_uri") == "" {
 			return redirectUri
@@ -60,7 +60,7 @@ func (c *AuthController) callback(ctx *fiber.Ctx) error {
 			return ctx.Query("redirect_uri")
 		}
 	}()
-	
+
 	values := url.Values{}
 	values.Set("access_token", res.Tokens.AccessToken)
 	values.Set("refresh_token", res.Tokens.RefreshToken)

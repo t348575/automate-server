@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	
+
 	opts := []fx.Option{}
 	opts = append(opts, provideOptions()...)
 	opts = append(opts, fx.Invoke(run))
@@ -30,7 +30,7 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Provide(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Invoke(func (config *config.Config) {
+		fx.Invoke(func(config *config.Config) {
 			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
 		}),
 		fx.Provide(config.ProvidePostgres),
@@ -43,11 +43,15 @@ func provideOptions() []fx.Option {
 		fx.Provide(repos.NewUserRepo),
 		fx.Provide(repos.NewRoleRepo),
 		fx.Provide(repos.NewJobRepo),
+		fx.Provide(repos.NewRbacRepo),
+		fx.Provide(repos.NewVerifyEmailRepo),
 		fx.Provide(providers.GetProviders),
 		fx.Invoke(controllers.RegisterUserController),
 		fx.Invoke(controllers.RegisterAuthController),
 		fx.Invoke(controllers.RegisterRbacController),
 		fx.Invoke(controllers.RegisterEmailController),
+		fx.Invoke(controllers.RegisterOrganizationController),
+		fx.Invoke(controllers.RegisterTeamsController),
 	}
 }
 
