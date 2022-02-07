@@ -41,7 +41,6 @@ func provideOptions() []fx.Option {
 		fx.Provide(repos.NewOrganizationRepo),
 		fx.Provide(repos.NewTeamRepo),
 		fx.Provide(repos.NewUserRepo),
-		fx.Provide(repos.NewRoleRepo),
 		fx.Provide(repos.NewJobRepo),
 		fx.Provide(repos.NewRbacRepo),
 		fx.Provide(repos.NewVerifyEmailRepo),

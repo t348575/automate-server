@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/automate/automate-server/general-services/models/rbac"
+	"github.com/automate/automate-server/general-services/models/userdata"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/rs/zerolog/log"
@@ -24,6 +24,12 @@ type TokenRequest struct {
 	ClientId     string `form:"client_id"`
 	ClientSecret string `form:"client_secret"`
 	Code         string `form:"code"`
+}
+
+type RefreshRequest struct {
+	ClientId     string
+	ClientSecret string
+	RefreshToken string `form:"refresh_token"`
 }
 
 type Router struct {
@@ -130,10 +136,18 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 			c.Locals("user", id)
 
 			if len(config.ResourceActions) > 0 {
-				if err := ValidateRoles(&config, c, id); err != nil {
+				valid, err := ValidateRoles(&config, c, id)
+				if err != nil {
 					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 						"error":             "access_denied",
 						"error_description": err.Error(),
+					})
+				}
+
+				if !valid {
+					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+						"error":             "access_denied",
+						"error_description": "Invalid permissions",
 					})
 				}
 			}
@@ -148,19 +162,40 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 	}
 }
 
-func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) error {
+func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) (bool, error) {
+	valid := true
+
 	for _, resource := range c.ResourceActions {
+		thisValid := false
+
 		if resource.Type == "org" {
-			userOrgRoles := new(rbac.UserOrganizationRoles)
-			err := c.Db.NewSelect().Model(userOrgRoles).Relation("Role").Relation("Role.ResourceActions").Relation("Role.ResourceActions.Resource").Relation("Role.ResourceActions.Action").Where("user_id = ?", userId).Scan(ctx.Context())
+			user := new(userdata.User)
+			err := c.Db.NewSelect().Model(user).Column("id").Relation("UserOrganizationRoles").Relation("UserOrganizationRoles.ResourceActions").Relation("UserOrganizationRoles.ResourceActions.Resource", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where("resource = ?", resource.Resource).WhereGroup(" AND ", func(qInner *bun.SelectQuery) *bun.SelectQuery {
+					for _, action := range resource.Actions {
+						qInner = qInner.WhereOr("action = ?", action)
+					}
+					return qInner
+				})
+			}).Relation("UserOrganizationRoles.ResourceActions.Action").Where("id = ?", userId).Scan(ctx.Context())
 			if err != nil {
-				return err
+				return false, err
 			}
 
-			return ctx.JSON(userOrgRoles)
+			for _, userOrgRole := range user.UserOrganizationRoles {
+				if len(userOrgRole.ResourceActions) == len(resource.Actions) {
+					thisValid = true
+					ctx.Locals("org", userOrgRole.Organization)
+					break
+				}
+			}
+		}
+
+		if !(valid && thisValid) {
+			return false, nil
 		}
 	}
-	return nil
+	return valid, nil
 }
 
 func ParsePublicKey(key string) *rsa.PublicKey {
@@ -201,5 +236,11 @@ func SetStateCookie(state string, c *fiber.Ctx) {
 func StandardInternalError(c *fiber.Ctx, err error) error {
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"error": err.Error(),
+	})
+}
+
+func StandardCouldNotParse(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		"error": "Could not parse request",
 	})
 }

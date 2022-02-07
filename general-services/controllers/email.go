@@ -73,7 +73,7 @@ func (r *EmailController) sendEmailList(c *fiber.Ctx) error {
 		})
 	}
 
-	if errors := validateStruct(*config); len(errors) > 0 {
+	if errors := utils.ValidateStruct(validator.New().Struct(*config)); len(errors) > 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(errors)
 	}
 
@@ -230,19 +230,4 @@ func (r *EmailController) sendEmail(body, subject, to string) error {
 	}
 
 	return email.Send(r.SmtpClient)
-}
-
-func validateStruct(c SendEmailConfig) []*utils.ErrorResponse {
-	var errors []*utils.ErrorResponse
-	err := validator.New().Struct(c)
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			var element utils.ErrorResponse
-			element.FailedField = err.StructNamespace()
-			element.Tag = err.Tag()
-			element.Value = err.Param()
-			errors = append(errors, &element)
-		}
-	}
-	return errors
 }

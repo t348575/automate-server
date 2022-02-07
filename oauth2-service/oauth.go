@@ -162,3 +162,76 @@ func getToken(c *fiber.Ctx) error {
 
 	return nil
 }
+
+func refresh(c *fiber.Ctx) error {
+	req := new(utils.RefreshRequest)
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
+			Error:            "invalid_request",
+			ErrorDescription: "invalid request parameters",
+		})
+	}
+
+	req.ClientId = c.Query("client_id")
+	req.ClientSecret = c.Query("client_secret")
+
+	if len(req.ClientId) == 0 || len(req.ClientSecret) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
+			Error:            "invalid_request",
+			ErrorDescription: "invalid request parameters",
+		})
+	}
+
+	if req.ClientId != client.Id && req.ClientSecret != client.Secret {
+		return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
+			Error:            "invalid_request",
+			ErrorDescription: "invalid client_id or client_secret",
+		})
+	}
+
+	if len(req.RefreshToken) > 0 && len(req.RefreshToken) < 4096 {
+		tok, err := jwt.Parse(req.RefreshToken, func(jwtToken *jwt.Token) (interface{}, error) {
+			if _, ok := jwtToken.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf("unexpected method: %s", jwtToken.Header["alg"])
+			}
+			return &jwtPublicKey, nil
+		})
+
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(OAuthError{
+				Error:            "invalid_request",
+				ErrorDescription: "could not parse code",
+			})
+		}
+
+		if _, ok := tok.Claims.(jwt.Claims); !ok && !tok.Valid {
+			return badCode(c)
+		}
+
+		claims, ok := tok.Claims.(jwt.MapClaims)
+		if ok && tok.Valid {
+			if claims.Valid() != nil {
+				return badCode(c)
+			}
+
+			if claims["sub"].(string) != "refresh" {
+				return badCode(c)
+			}
+
+			tokens, err := utils.OAuthJwt(claims["user"].(string), claims["scope"].(string), &jwtPrivateKey)
+			if err != nil {
+				return jwtCreateError(c)
+			}
+
+			return c.Status(fiber.StatusOK).JSON(tokenResponse{
+				AccessToken:  tokens.AccessToken,
+				RefreshToken: tokens.RefreshToken,
+			})
+		}
+	} else {
+		return badCode(c)
+	}
+
+	return nil
+
+}

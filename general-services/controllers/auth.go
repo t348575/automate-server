@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/automate/automate-server/general-services/config"
 	"github.com/automate/automate-server/general-services/providers"
@@ -20,44 +21,46 @@ type AuthController struct {
 }
 
 var (
-	redirectUri string
+	redirectUri  string
+	clientId     string
+	clientSecret string
 )
 
 func RegisterAuthController(r *utils.Router, config *config.Config, c AuthController) {
 	redirectUri = config.RedirectUri
+	clientId = config.AuthProviders.EmailClient
+	clientSecret = config.AuthProviders.EmailSecret
 
 	r.Get("/auth/:provider/login", c.login)
 	r.Post("/auth/:provider/callback", c.callback)
 	r.Get("/auth/:provider/callback", c.callback)
-	r.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.SendString("Hello from auth controller")
-	})
+	r.Post("/auth/refresh", c.refresh)
 }
 
-func (c *AuthController) login(ctx *fiber.Ctx) error {
-	c.Providers[ctx.Params("provider")].Login(ctx)
+func (r *AuthController) login(c *fiber.Ctx) error {
+	r.Providers[c.Params("provider")].Login(c)
 	return nil
 }
 
-func (c *AuthController) callback(ctx *fiber.Ctx) error {
-	res, err := c.Providers[ctx.Params("provider")].Callback(ctx)
+func (r *AuthController) callback(c *fiber.Ctx) error {
+	res, err := r.Providers[c.Params("provider")].Callback(c)
 
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":             "access_denied",
 			"error_description": err.Error(),
 		})
 	}
 
 	currentRedirectUri := func() string {
-		if ctx.Query("redirect_uri") == "" {
+		if c.Query("redirect_uri") == "" {
 			return redirectUri
 		} else {
-			_, err := url.Parse(ctx.Query("redirect_uri"))
+			_, err := url.Parse(c.Query("redirect_uri"))
 			if err != nil {
 				return redirectUri
 			}
-			return ctx.Query("redirect_uri")
+			return c.Query("redirect_uri")
 		}
 	}()
 
@@ -72,5 +75,39 @@ func (c *AuthController) callback(ctx *fiber.Ctx) error {
 		currentRedirectUri = fmt.Sprintf("%s&%s", currentRedirectUri, values.Encode())
 	}
 
-	return ctx.Redirect(currentRedirectUri, fiber.StatusTemporaryRedirect)
+	return c.Redirect(currentRedirectUri, fiber.StatusTemporaryRedirect)
+}
+
+func (r *AuthController) refresh(c *fiber.Ctx) error {
+	a := fiber.AcquireAgent()
+	defer fiber.ReleaseAgent(a)
+
+	res := fiber.AcquireResponse()
+	defer fiber.ReleaseResponse(res)
+
+	a.Reuse()
+	req := a.Request()
+	req.Header.SetMethod(fiber.MethodPost)
+
+	values := url.Values{}
+	values.Set("client_id", clientId)
+	values.Set("client_secret", clientSecret)
+
+	uri := oAuthService + "/refresh"
+	uri = fmt.Sprintf("%s?%s", uri, values.Encode())
+	req.SetRequestURI(uri)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	req.SetBody(c.Body())
+	if err := a.Parse(); err != nil {
+		return utils.StandardInternalError(c, err)
+	}
+
+	code, body, errArr := a.SetResponse(res).Timeout(120 * time.Second).Bytes()
+	if errArr != nil || len(errArr) != 0 {
+		return utils.StandardInternalError(c, errArr[0])
+	}
+
+	c.Set("Content-Type", "application/json")
+	return c.Status(code).Send(body)
 }

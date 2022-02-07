@@ -115,6 +115,8 @@ func main() {
 
 	app.Post("/oauth2/create", createAccount)
 
+	app.Post("/oauth2/refresh", refresh)
+
 	app.Static("*", c.LoginFolderPath)
 
 	app.Listen(c.Port)
@@ -167,7 +169,7 @@ func createAccount(c *fiber.Ctx) error {
 		})
 	}
 
-	if errors := validateStruct(*user); len(errors) > 0 {
+	if errors := utils.ValidateStruct(validate.Struct(user)); len(errors) > 0 {
 		return c.Status(fiber.StatusBadRequest).JSON(errors)
 	}
 
@@ -246,19 +248,4 @@ func createAccount(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(tempProviderDetails)
-}
-
-func validateStruct(user createUser) []*utils.ErrorResponse {
-	var errors []*utils.ErrorResponse
-	err := validate.Struct(user)
-	if err != nil {
-		for _, err := range err.(validator.ValidationErrors) {
-			var element utils.ErrorResponse
-			element.FailedField = err.StructNamespace()
-			element.Tag = err.Tag()
-			element.Value = err.Param()
-			errors = append(errors, &element)
-		}
-	}
-	return errors
 }

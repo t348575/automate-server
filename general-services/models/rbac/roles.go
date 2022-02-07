@@ -7,5 +7,6 @@ type Role struct {
 
 	Id              int64 `bun:",pk"`
 	Name            string
+	Organization    int64
 	ResourceActions []ResourceActions `bun:"m2m:rbac.resource_actions_roles,join:Roles=ResourceActions"`
 }

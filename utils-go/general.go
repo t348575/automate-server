@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -180,7 +181,7 @@ func HashPassword(password string) (encodedHash string, err error) {
 func OAuthJwt(user, scope string, jwtPrivateKey *rsa.PrivateKey) (*oauth2.Token, error) {
 	refreshJwt, err := CreateJwt(JwtConfig{
 		User:       user,
-		ExpireIn:   time.Minute * 60,
+		ExpireIn:   time.Minute * 90,
 		Scope:      scope,
 		Subject:    "refresh",
 		Data:       map[string]string{},
@@ -223,4 +224,18 @@ func GetFromMapArray(data []map[string]string, key string, value string) int {
 		}
 	}
 	return -1
+}
+
+func ValidateStruct(err error) []*ErrorResponse {
+	var errors []*ErrorResponse
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element ErrorResponse
+			element.FailedField = err.StructNamespace()
+			element.Tag = err.Tag()
+			element.Value = err.Param()
+			errors = append(errors, &element)
+		}
+	}
+	return errors
 }

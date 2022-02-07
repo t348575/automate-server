@@ -30,9 +30,7 @@ type createOrgConfig struct {
 func (r *OrganizationController) createOrganization(c *fiber.Ctx) error {
 	config := new(createOrgConfig)
 	if err := c.BodyParser(config); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Could not parse request",
-		})
+		return utils.StandardCouldNotParse(c)
 	}
 
 	if len(config.Name) == 0 {
@@ -66,7 +64,13 @@ func (r *OrganizationController) createOrganization(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":      "Organization created",
-		"organization": orgId,
+		"message": "Organization created!",
+		"id":      orgId,
+	})
+}
+
+func (r OrganizationController) updateOrganization(c *fiber.Ctx) error {
+	return c.Status(fiber.StatusNotImplemented).JSON(fiber.Map{
+		"error": "Not implemented",
 	})
 }

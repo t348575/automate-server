@@ -47,14 +47,14 @@ CREATE TABLE IF NOT EXISTS userdata.users
 CREATE TABLE IF NOT EXISTS rbac.resource
 (
     id bigserial NOT NULL,
-    resource character varying(32) NOT NULL,
+    resource character varying(32) NOT NULL UNIQUE,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS rbac.actions
 (
     id bigserial NOT NULL,
-    action character varying(16) NOT NULL,
+    action character varying(16) NOT NULL UNIQUE,
     PRIMARY KEY (id)
 );
 
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS rbac.roles
 (
     id bigserial NOT NULL,
     name character varying(128) NOT NULL,
+    organization bigint NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -112,6 +113,13 @@ ALTER TABLE IF EXISTS userdata.teams
 ALTER TABLE IF EXISTS userdata.teams_users
     ADD FOREIGN KEY (team_id)
     REFERENCES userdata.teams (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+ALTER TABLE IF EXISTS rbac.roles
+    ADD FOREIGN KEY (organization)
+    REFERENCES userdata.organizations (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
@@ -253,7 +261,6 @@ ALTER TABLE IF EXISTS userdata.user_organization_roles
     ON DELETE NO ACTION
     NOT VALID;
 
-
 ALTER TABLE IF EXISTS userdata.user_organization_roles
     ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
@@ -267,6 +274,25 @@ ALTER TABLE IF EXISTS system.verify_email
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
+
+CREATE TABLE IF NOT EXISTS userdata.notifications
+(
+    id bigserial NOT NULL,
+    user_id bigint NOT NULL,
+    arrived_at timestamp without time zone NOT NULL,
+    silent boolean NOT NULL DEFAULT false,
+    title character varying(1024) NOT NULL,
+    body json NOT NULL,
+    PRIMARY KEY (id)
+);
+
+ALTER TABLE IF EXISTS userdata.notifications
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
 
 INSERT INTO rbac.actions(action) VALUES
     ('CREATE'),
@@ -291,7 +317,7 @@ INSERT INTO rbac.roles(name) VALUES
     ('ORG_ADMIN');
 
 INSERT INTO rbac.resource_actions_roles(resource_actions_id, role_id)
-    SELECT ra.id, 1 FROM rbac.resource_actions ra WHERE ra.resource_id <= 5;
+    SELECT ra.id, 1 FROM rbac.resource_actions ra WHERE ra.resource_id <= 7;
 
 /* REMOVE IN PRODUCTION */
 
