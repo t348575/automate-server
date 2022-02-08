@@ -293,6 +293,31 @@ ALTER TABLE IF EXISTS userdata.notifications
     ON DELETE NO ACTION
     NOT VALID;
 
+CREATE TABLE IF NOT EXISTS userdata.invitations
+(
+    id bigserial NOT NULL,
+    user_id bigint NOT NULL,
+    resource_id bigint NOT NULL,
+    resource_type character varying(8) NOT NULL,
+    message character varying(1024) NOT NULL,
+    role bigint NOT NULL,
+    PRIMARY KEY (id)
+);
+
+ALTER TABLE IF EXISTS userdata.invitations
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.invitations
+    ADD FOREIGN KEY (role)
+    REFERENCES rbac.roles (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
 
 INSERT INTO rbac.actions(action) VALUES
     ('CREATE'),
