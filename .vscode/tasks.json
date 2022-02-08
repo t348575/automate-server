@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start env",
+            "type": "shell",
+            "command": "./up.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/dev/docker"
+            },
+            "args": [],
+            "problemMatcher": []
+        },
+        {
+            "label": "Stop env",
+            "type": "shell",
+            "command": "./down.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/dev/docker"
+            },
+            "args": [],
+            "problemMatcher": []
+        }
+    ]
+}
