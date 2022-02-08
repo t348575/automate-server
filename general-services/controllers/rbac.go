@@ -72,7 +72,7 @@ func (r *RbacController) createRole(c *fiber.Ctx) error {
 
 	id, err := r.Repo.CreateRole(c.Context(), rbac.Role{
 		Name:         config.Name,
-		Organization: c.Locals("org").(int64),
+		OrganizationId: c.Locals("org").(int64),
 	}, rcs)
 	if err != nil {
 		return utils.StandardInternalError(c, err)

@@ -17,9 +17,11 @@ type User struct {
 	ProviderDetails       map[string]interface{} `bun:",json_use_number" json:"provider_details,omitempty"`
 	Password              string                 `json:"-,omitempty"`
 	Verified              bool                   `json:"verified,omitempty"`
-	Organization          *Organization          `bun:"rel:belongs-to,join:organization=id" json:"organization,omitempty"`
+	OrganizationId int64 `json:"organization_id,omitempty"`
+	Organization          *Organization          `bun:"rel:belongs-to,join:organization_id=id" json:"organization,omitempty"`
 	Teams                 []Team                 `bun:"m2m:userdata.teams_users,join:Users=Teams" json:"teams,omitempty"`
 	UserOrganizationRoles []rbac.Role            `bun:"m2m:rbac.user_organization_roles,join:User=Role" json:"organization_roles,omitempty"`
+	UserTeamRoles []rbac.Role `bun:"m2m:rbac.user_team_roles,join:User=Role" json:"team_roles,omitempty"`
 }
 
 func (user *User) ToMap() map[string]string {

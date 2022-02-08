@@ -7,6 +7,7 @@ type Team struct {
 
 	Id           int64 `bun:",pk,autoincrement"`
 	Name         string
-	Organization Organization `bun:"rel:belongs-to,join:organization=id"`
+	OrganizationId int64
+	Organization Organization `bun:"rel:belongs-to,join:organization_id=id"`
 	Users        []User       `bun:"m2m:userdata.teams_users,join:Teams=Users"`
 }

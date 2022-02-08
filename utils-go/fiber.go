@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	joined_models "github.com/automate/automate-server/general-services/models/joined-models"
 	"github.com/automate/automate-server/general-services/models/userdata"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
@@ -136,6 +137,7 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 			c.Locals("user", id)
 
 			if len(config.ResourceActions) > 0 {
+				ValidateRoles(&config, c, id)
 				valid, err := ValidateRoles(&config, c, id)
 				if err != nil {
 					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -185,9 +187,39 @@ func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) (bool, 
 			for _, userOrgRole := range user.UserOrganizationRoles {
 				if len(userOrgRole.ResourceActions) == len(resource.Actions) {
 					thisValid = true
-					ctx.Locals("org", userOrgRole.Organization)
+					ctx.Locals("org", userOrgRole.OrganizationId)
 					break
 				}
+			}
+		}
+
+		if resource.Type == "team" {
+			var teamId int64
+			var err error
+			switch resource.IdLocation {
+				case "query":
+					teamId, err = strconv.ParseInt(ctx.Query("team_id"), 10, 64)
+			}
+			if err != nil {
+				return false, err
+			}
+
+			user := new(joined_models.UserTeamRoles)
+			err = c.Db.NewSelect().Model(user).Relation("Team").Relation("Role").Relation("Role.ResourceActions").Relation("Role.ResourceActions.Resource", func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where("resource = ?", resource.Resource).WhereGroup(" AND ", func(qInner *bun.SelectQuery) *bun.SelectQuery {
+					for _, action := range resource.Actions {
+						qInner = qInner.WhereOr("action = ?", action)
+					}
+					return qInner
+				})
+			}).Relation("Role.ResourceActions.Action").Where("user_id = ?", userId).Where("team_id = ?", teamId).Scan(ctx.Context())
+			if err != nil {
+				return false, err
+			}
+
+			if len(user.Role.ResourceActions) == len(resource.Actions) {
+				thisValid = true
+				ctx.Locals("team", teamId)
 			}
 		}
 

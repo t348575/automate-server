@@ -67,6 +67,6 @@ func (c *UserRepo) SetEmailVerified(ctx context.Context, id int64) error {
 }
 
 func (c *UserRepo) SetOrganization(ctx context.Context, orgId, userId int64, db bun.IDB) error {
-	_, err := db.NewUpdate().Model(new(models.User)).Set("organization = ?", orgId).Where("id = ?", userId).Exec(ctx)
+	_, err := db.NewUpdate().Model(new(models.User)).Set("organization_id = ?", orgId).Where("id = ?", userId).Exec(ctx)
 	return err
 }

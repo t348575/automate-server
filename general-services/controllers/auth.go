@@ -103,7 +103,7 @@ func (r *AuthController) refresh(c *fiber.Ctx) error {
 		return utils.StandardInternalError(c, err)
 	}
 
-	code, body, errArr := a.SetResponse(res).Timeout(120 * time.Second).Bytes()
+	code, body, errArr := a.SetResponse(res).Timeout(5 * time.Second).Bytes()
 	if errArr != nil || len(errArr) != 0 {
 		return utils.StandardInternalError(c, errArr[0])
 	}

@@ -3,6 +3,7 @@ package repos
 import (
 	"context"
 	"database/sql"
+	"sort"
 
 	joined_models "github.com/automate/automate-server/general-services/models/joined-models"
 	"github.com/automate/automate-server/general-services/models/rbac"
@@ -77,12 +78,14 @@ func (c *RbacRepo) CreateResourceActions(ctx context.Context, rcs []rbac.Resourc
 			return rcs, err
 		}
 
-		rcs[i] = temp
-	}
+		if temp.Id == 0 {
+			_, err := c.db.NewInsert().Model(temp).Returning("id").Exec(ctx)
+			if err != nil {
+				return rcs, err
+			}
+		}
 
-	if len(rcs) > 0 {
-		_, err := c.db.NewInsert().Model(&rcs).Returning("id").Exec(ctx)
-		return rcs, err
+		rcs[i] = temp
 	}
 	return rcs, nil
 }
@@ -137,6 +140,18 @@ func (c *RbacRepo) SetRcIds(ctx context.Context, rc rbac.ResourceActions) (rbac.
 	} else {
 		rc.ActionsId = acItem
 	}
+	
+	tempRc := new(rbac.ResourceActions)
+	err := c.db.NewSelect().Model(tempRc).Column("id").Where("resource_id = ? AND actions_id = ?", rc.ResourceId, rc.ActionsId).Scan(ctx)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return rc, nil
+		}
+
+		return rc, err
+	}
+
+	rc.Id = tempRc.Id
 
 	return rc, nil
 }
@@ -162,4 +177,118 @@ func (c *RbacRepo) CreateRole(ctx context.Context, role rbac.Role, rcs []rbac.Re
 		_, err = tx.NewInsert().Model(&resourceActionRoles).Exec(ctx)
 		return err
 	})
+}
+
+func (c *RbacRepo) CreateBlindRoleTx(ctx context.Context, role rbac.Role, rcs []rbac.ResourceActionRoles, db bun.IDB) (int64, error) {
+	_, err := db.NewInsert().Model(&role).Returning("id").Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	
+	for i := range rcs {
+		rcs[i].RoleId = role.Id
+	}
+	
+	_, err = db.NewInsert().Model(&rcs).Exec(ctx)
+	return role.Id, err
+}
+
+func (c *RbacRepo) DoesRoleHaveResourceAction(ctx context.Context, roleId, orgId int64, resource string, actions []string) (bool, error) {
+	role := new(rbac.Role)
+	err := c.db.NewSelect().Model(role).Relation("ResourceActions").Relation("ResourceActions.Resource", func (q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("resource.resource = ?", resource)
+		}).Relation("ResourceActions.Action", func (q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("action.action IN(?)", bun.In(actions))
+		}).Where("id = ?", roleId).WhereGroup(" AND ", func (q *bun.SelectQuery) *bun.SelectQuery {
+		return q.WhereOr("organization_id = ?", orgId).WhereOr("organization_id IS NULL")
+	}).Scan(ctx)
+	if err != nil {
+		return false, err
+	}
+	
+	if len(actions) != len(role.ResourceActions) {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+func (c *RbacRepo) DoesRoleExistWithResourceAction(ctx context.Context, orgId int64, raIds []int64) (int64, error) {
+	sort.Slice(raIds, func(i, j int) bool {
+		return raIds[i] < raIds[j]
+	})
+
+	rows, err := c.db.QueryContext(ctx, `SELECT id FROM rbac.roles WHERE id IN (SELECT rar.role_id FROM rbac.resource_actions_roles rar
+		RIGHT JOIN rbac.roles ro ON rar.role_id = ro.id
+		GROUP BY rar.role_id HAVING ARRAY_AGG(rar.resource_actions_id ORDER BY rar.resource_actions_id) = ARRAY[?]::bigint[]) AND (organization_id = ? OR organization_id IS NULL)`, bun.In(raIds), orgId)
+	if err != nil {
+		return 0, err
+	}
+
+	for rows.Next() {
+		var id int64
+		err := rows.Scan(&id)
+		if err != nil {
+			return 0, err
+		}
+
+		return id, nil
+	}
+
+	return 0, nil
+}
+
+func (c *RbacRepo) AddRoleToTeamUserTx(ctx context.Context, item joined_models.UserTeamRoles, db bun.IDB) error {
+	_, err := db.NewInsert().Model(&item).Exec(ctx)
+	return err
+}
+
+func (c *RbacRepo) AddRoleWithActionsTx(ctx context.Context, orgId int64, name, resource string, creatorActions []string, db bun.IDB) (int64, error) {
+	rarIds := make([]int64, len(creatorActions))
+	for i, action := range creatorActions {
+		ra, err := c.SetRcIds(ctx, rbac.ResourceActions{
+			Resource: rbac.Resource{
+				Resource: resource,
+			},
+			Action: rbac.Action{
+				Action: action,
+			},
+		})
+		if err != nil {
+			return 0, err
+		}
+
+		rarIds[i] = ra.Id
+	}
+
+	exist, err := c.DoesRoleExistWithResourceAction(ctx, orgId, rarIds)
+	if err != nil {
+		return 0, err
+	}
+
+	if exist == 0 {
+		exist, err = c.CreateBlindRoleTx(ctx, rbac.Role{
+			Name: name,
+			OrganizationId: orgId,
+		}, func() []rbac.ResourceActionRoles {
+			arr := make([]rbac.ResourceActionRoles, len(rarIds))
+			for i, rarId := range rarIds {
+				arr[i] = rbac.ResourceActionRoles{
+					ResourceActionsId: rarId,
+				}
+			}	
+			return arr
+		}(), db)
+		if err != nil {
+			return 0, err
+		}
+
+		return exist, nil
+	}
+
+	return exist, nil
+}
+
+func (c *RbacRepo) GetDb() *bun.DB {
+	return c.db	
 }

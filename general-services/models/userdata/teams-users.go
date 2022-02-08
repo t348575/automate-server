@@ -9,4 +9,5 @@ type TeamToUser struct {
 	Teams  *Team `bun:"rel:belongs-to,join:team_id=id"`
 	UserId int64
 	Users  *User `bun:"rel:belongs-to,join:user_id=id"`
+	Visible bool
 }

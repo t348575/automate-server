@@ -5,13 +5,16 @@ import (
 	"crypto/rsa"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/automate/automate-server/general-services/models"
 	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -238,4 +241,40 @@ func ValidateStruct(err error) []*ErrorResponse {
 		}
 	}
 	return errors
+}
+
+func SendEmail(url string, config *models.SendEmailConfig) error {
+	a := fiber.AcquireAgent()
+	defer fiber.ReleaseAgent(a)
+
+	res := fiber.AcquireResponse()
+	defer fiber.ReleaseResponse(res)
+
+	a.Reuse()
+	req := a.Request()
+	req.Header.SetMethod(fiber.MethodPost)
+	req.SetRequestURI(url)
+	req.Header.Set("Content-Type", "application/json")
+
+	body, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	req.SetBody(body)
+	if err := a.Parse(); err != nil {
+		return err
+	}
+
+	code, body, errArr := a.SetResponse(res).Timeout(120 * time.Second).Bytes()
+	if errArr != nil || len(errArr) != 0 {
+		return errArr[0]
+	}
+
+	if code != fiber.StatusOK && code != fiber.StatusCreated {
+		fmt.Println(string(body))
+		return errors.New(string(body))
+	}
+
+	return nil
 }

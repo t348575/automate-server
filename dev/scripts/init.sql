@@ -21,14 +21,15 @@ CREATE TABLE IF NOT EXISTS userdata.teams
 (
     id bigserial NOT NULL,
     name character varying(128) NOT NULL,
-    organization bigint NOT NULL,
+    organization_id bigint NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS userdata.teams_users
 (
     team_id bigint NOT NULL,
-    user_id bigint NOT NULL
+    user_id bigint NOT NULL,
+    visible boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE IF NOT EXISTS userdata.users
@@ -40,21 +41,21 @@ CREATE TABLE IF NOT EXISTS userdata.users
     provider_details jsonb NOT NULL,
     password character varying(512),
     verified boolean NOT NULL DEFAULT false,
-    organization bigint,
+    organization_id bigint,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS rbac.resource
 (
     id bigserial NOT NULL,
-    resource character varying(32) NOT NULL UNIQUE,
+    resource character varying(32) NOT NULL,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS rbac.actions
 (
     id bigserial NOT NULL,
-    action character varying(16) NOT NULL UNIQUE,
+    action character varying(16) NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -69,20 +70,14 @@ CREATE TABLE IF NOT EXISTS rbac.resource_actions
 CREATE TABLE IF NOT EXISTS rbac.roles
 (
     id bigserial NOT NULL,
-    name character varying(128) NOT NULL,
-    organization bigint NOT NULL,
+    name character varying(256) NOT NULL,
+    organization_id bigint,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS rbac.resource_actions_roles
 (
     resource_actions_id bigint NOT NULL,
-    role_id bigint NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS rbac.user_organization_roles
-(
-    user_id bigint NOT NULL,
     role_id bigint NOT NULL
 );
 
@@ -102,8 +97,37 @@ CREATE TABLE IF NOT EXISTS userdata.wallet
     PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS rbac.user_organization_roles
+(
+    user_id bigint NOT NULL,
+    role_id bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS userdata.notifications
+(
+    id bigserial NOT NULL,
+    user_id bigint NOT NULL,
+    arrived_at timestamp without time zone NOT NULL,
+    silent boolean NOT NULL DEFAULT false,
+    read boolean NOT NULL DEFAULT false,
+    title character varying(1024) NOT NULL,
+    body jsonb NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS userdata.invitations
+(
+    id character(64) NOT NULL,
+    user_id bigint NOT NULL,
+    resource_id bigint NOT NULL,
+    resource_type character varying(8) NOT NULL,
+    role_id bigint NOT NULL,
+    message character varying(1024) NOT NULL,
+    PRIMARY KEY (id)
+);
+
 ALTER TABLE IF EXISTS userdata.teams
-    ADD FOREIGN KEY (organization)
+    ADD FOREIGN KEY (organization_id)
     REFERENCES userdata.organizations (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
@@ -117,16 +141,17 @@ ALTER TABLE IF EXISTS userdata.teams_users
     ON DELETE NO ACTION
     NOT VALID;
 
-ALTER TABLE IF EXISTS rbac.roles
-    ADD FOREIGN KEY (organization)
-    REFERENCES userdata.organizations (id) MATCH SIMPLE
+
+ALTER TABLE IF EXISTS userdata.teams_users
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
 
 
 ALTER TABLE IF EXISTS userdata.users
-    ADD FOREIGN KEY (organization)
+    ADD FOREIGN KEY (organization_id)
     REFERENCES userdata.organizations (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
@@ -149,6 +174,14 @@ ALTER TABLE IF EXISTS rbac.resource_actions
     NOT VALID;
 
 
+ALTER TABLE IF EXISTS rbac.roles
+    ADD FOREIGN KEY (organization_id)
+    REFERENCES userdata.organizations (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
 ALTER TABLE IF EXISTS rbac.resource_actions_roles
     ADD FOREIGN KEY (resource_actions_id)
     REFERENCES rbac.resource_actions (id) MATCH SIMPLE
@@ -158,22 +191,6 @@ ALTER TABLE IF EXISTS rbac.resource_actions_roles
 
 
 ALTER TABLE IF EXISTS rbac.resource_actions_roles
-    ADD FOREIGN KEY (role_id)
-    REFERENCES rbac.roles (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS rbac.user_organization_roles
-    ADD FOREIGN KEY (user_id)
-    REFERENCES userdata.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS rbac.user_organization_roles
     ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
@@ -203,6 +220,67 @@ ALTER TABLE IF EXISTS rbac.user_team_roles
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.user_organization_roles
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.user_organization_roles
+    ADD FOREIGN KEY (role_id)
+    REFERENCES rbac.roles (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.notifications
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.invitations
+    ADD FOREIGN KEY (user_id)
+    REFERENCES userdata.users (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+
+ALTER TABLE IF EXISTS userdata.invitations
+    ADD FOREIGN KEY (role)
+    REFERENCES rbac.roles (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+CREATE TABLE IF NOT EXISTS system.batch_jobs
+(
+    id bigserial NOT NULL,
+    service character varying(16) NOT NULL,
+    item character varying(1) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    status boolean NOT NULL,
+    done bigint NOT NULL,
+    total bigint NOT NULL,
+    details jsonb NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS system.verify_email
+(
+    user_id bigint NOT NULL,
+    code character varying(64) NOT NULL,
+    expiry timestamp without time zone NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS scripts.scripts
 (
@@ -227,108 +305,18 @@ CREATE TABLE IF NOT EXISTS scripts.scripts
     PRIMARY KEY (id)
 );
 
-CREATE TABLE IF NOT EXISTS system.jobs
-(
-    id bigserial NOT NULL,
-    service character varying(16) NOT NULL,
-    item character varying(1) NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    status boolean NOT NULL,
-    done bigint NOT NULL,
-    total bigint NOT NULL,
-    details jsonb NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS system.verify_email
-(
-    user_id bigint NOT NULL,
-    code character varying(64) NOT NULL,
-    expiry timestamp without time zone NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS userdata.user_organization_roles
-(
-    user_id bigint NOT NULL,
-    role_id bigint NOT NULL
-);
-
-ALTER TABLE IF EXISTS userdata.user_organization_roles
-    ADD FOREIGN KEY (user_id)
-    REFERENCES userdata.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-ALTER TABLE IF EXISTS userdata.user_organization_roles
-    ADD FOREIGN KEY (role_id)
-    REFERENCES rbac.roles (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-ALTER TABLE IF EXISTS system.verify_email
-    ADD FOREIGN KEY (user_id)
-    REFERENCES userdata.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-CREATE TABLE IF NOT EXISTS userdata.notifications
-(
-    id bigserial NOT NULL,
-    user_id bigint NOT NULL,
-    arrived_at timestamp without time zone NOT NULL,
-    silent boolean NOT NULL DEFAULT false,
-    title character varying(1024) NOT NULL,
-    body json NOT NULL,
-    PRIMARY KEY (id)
-);
-
-ALTER TABLE IF EXISTS userdata.notifications
-    ADD FOREIGN KEY (user_id)
-    REFERENCES userdata.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-CREATE TABLE IF NOT EXISTS userdata.invitations
-(
-    id bigserial NOT NULL,
-    user_id bigint NOT NULL,
-    resource_id bigint NOT NULL,
-    resource_type character varying(8) NOT NULL,
-    message character varying(1024) NOT NULL,
-    role bigint NOT NULL,
-    PRIMARY KEY (id)
-);
-
-ALTER TABLE IF EXISTS userdata.invitations
-    ADD FOREIGN KEY (user_id)
-    REFERENCES userdata.users (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS userdata.invitations
-    ADD FOREIGN KEY (role)
-    REFERENCES rbac.roles (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
+/* INITIAL VALUES */
 
 INSERT INTO rbac.actions(action) VALUES
     ('CREATE'),
     ('READ'),
     ('UPDATE'),
-    ('DELETE');
+    ('DELETE'),
+    ('INVITE');
 
 INSERT INTO rbac.resource(resource) VALUES
     ('GENERAL_METADATA'),
     ('RESTRICTED_METADATA'),
-    ('INVITE'),
     ('USER'),
     ('ROLE'),
     ('TEAM'),
@@ -342,11 +330,11 @@ INSERT INTO rbac.roles(name) VALUES
     ('ORG_ADMIN');
 
 INSERT INTO rbac.resource_actions_roles(resource_actions_id, role_id)
-    SELECT ra.id, 1 FROM rbac.resource_actions ra WHERE ra.resource_id <= 7;
+    SELECT ra.id, 1 FROM rbac.resource_actions ra;
 
 /* REMOVE IN PRODUCTION */
 
-INSERT INTO userdata.users(name, email, provider, provider_details, password, verified, organization) VALUES
+INSERT INTO userdata.users(name, email, provider, provider_details, password, verified, organization_id) VALUES
     ('Joseph Kanichai', 'kjosephsubash@gmail.com', 'email', '{"locale": "en-US","picture": "https://iupac.org/wp-content/uploads/2018/05/default-avatar.png"}',
     '$argon2id$v=19$m=65536,t=3,p=2$pVz5ubMpzehLSq/4D82/Vw$eFQQuWGjSspJjQnAyjm0Q7ii6puCW/w9P25+WZDFq9A', true, null);
 

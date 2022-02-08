@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-services/config"
-	"github.com/automate/automate-server/general-services/controllers"
+	"github.com/automate/automate-server/general-services/models"
 	"github.com/automate/automate-server/http-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
@@ -211,7 +211,7 @@ func createAccount(c *fiber.Ctx) error {
 	req.SetRequestURI(uri)
 	req.Header.Set("Content-Type", "application/json")
 
-	body, err := json.Marshal(controllers.SendEmailConfig{
+	body, err := json.Marshal(models.SendEmailConfig{
 		To:            []string{user.Email},
 		Subject:       "Welcome to the Automate {{user.name}}",
 		TemplateId:    "5kf8kmgldk48rkcm",

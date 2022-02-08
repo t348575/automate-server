@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-services/config"
+	"github.com/automate/automate-server/general-services/models"
 	"github.com/automate/automate-server/general-services/models/system"
 	"github.com/automate/automate-server/general-services/repos"
 	"github.com/automate/automate-server/utils-go"
@@ -17,15 +18,6 @@ import (
 	"go.uber.org/fx"
 	"golang.org/x/net/context"
 )
-
-type SendEmailConfig struct {
-	To            []string            `json:"to,omitempty" validate:"required,gt=0,dive,required,email"`
-	Subject       string              `json:"subject,omitempty" validate:"required,min=1,max=998"`
-	TemplateId    string              `json:"template_id,omitempty" validate:"required,len=16"`
-	Type          string              `json:"type,omitempty" validate:"required,min=1,max=16"`
-	ReplaceVars   []map[string]string `json:"replace_vars,omitempty" validate:"required,dive,dive,required,min=1,max=1024"`
-	ReplaceFromDb bool                `json:"replace_from_db,omitempty"`
-}
 
 type sendEmailResponse struct {
 	Mode   string   `json:"mode,omitempty"`
@@ -63,7 +55,7 @@ func RegisterEmailController(r *utils.Router, config *config.Config, c EmailCont
 }
 
 func (r *EmailController) sendEmailList(c *fiber.Ctx) error {
-	config := new(SendEmailConfig)
+	config := new(models.SendEmailConfig)
 	config.ReplaceFromDb = true
 
 	if err := c.BodyParser(config); err != nil {
@@ -133,7 +125,7 @@ func (r *EmailController) sendEmailList(c *fiber.Ctx) error {
 	})
 }
 
-func (r *EmailController) parseAndSendEmails(template string, config *SendEmailConfig, id int64) []failed {
+func (r *EmailController) parseAndSendEmails(template string, config *models.SendEmailConfig, id int64) []failed {
 	res := make([]failed, 0)
 
 	fetchUserFromDb := func() bool {

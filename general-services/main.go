@@ -44,6 +44,7 @@ func provideOptions() []fx.Option {
 		fx.Provide(repos.NewJobRepo),
 		fx.Provide(repos.NewRbacRepo),
 		fx.Provide(repos.NewVerifyEmailRepo),
+		fx.Provide(repos.NewInvitationRepo),
 		fx.Provide(providers.GetProviders),
 		fx.Invoke(controllers.RegisterUserController),
 		fx.Invoke(controllers.RegisterAuthController),
