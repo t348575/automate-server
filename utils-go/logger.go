@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
-func ConfigureLogger() bool {
+func ConfigureLogger() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 
@@ -25,5 +25,4 @@ func ConfigureLogger() bool {
 	)
 
 	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
-	return true
 }

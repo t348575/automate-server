@@ -51,11 +51,16 @@ func RegisterTeamsController(r *utils.Router, config *config.Config, db *bun.DB,
 				Actions:  []string{"INVITE"},
 				Type:     "team",
 				UseId:    true,
-				IdLocation: "query",
-			},
+				IdLocation: "query",},
 		},
 		Db: db,
 	}), c.inviteUser);
+
+	r.Post("/teams/invite/accept/:id", utils.Protected(utils.JwtMiddlewareConfig{
+		ReadFrom: "header",
+		Subject: "access",
+		Scopes: []string{"basic"},
+	}), c.acceptInvite);
 }
 
 type createTeamConfig struct {
@@ -245,5 +250,55 @@ func (r *TeamsController) inviteUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"id": id,
 		"message": "invitation sent",
+	})
+}
+
+type acceptInviteConfig struct {
+	InviteId string `json:"invite_id" validate:"required,string,min=1,max=32"`
+
+}
+
+func (r *TeamsController) acceptInvite(c *fiber.Ctx) error {
+	if len(c.Params("id")) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invite id is required",
+		})
+	}
+
+	user, err := r.UserRepo.GetUser(c.Context(), c.Locals("user").(int64))
+	if err != nil {
+		return utils.StandardInternalError(c, err)
+	}
+
+	invite, err := r.InviteRepo.GetInvitation(c.Context(), c.Params("id"))
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "invite does not exist",
+			})
+		}
+
+		return utils.StandardInternalError(c, err)
+	}
+
+	if invite.UserId != user.Id {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invite does not belong to user",
+		})
+	}
+
+	if invite.Accepted {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invite has already been accepted",
+		})
+	}
+
+	err = r.InviteRepo.AcceptInvite(c.Context(), invite.Id)
+	if err != nil {
+		return utils.StandardInternalError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "invite accepted",
 	})
 }

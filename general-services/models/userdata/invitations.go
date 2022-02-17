@@ -1,6 +1,10 @@
 package userdata
 
-import "github.com/uptrace/bun"
+import (
+	"time"
+
+	"github.com/uptrace/bun"
+)
 
 type Invitation struct {
 	bun.BaseModel `bun:"userdata.invitations"`
@@ -12,4 +16,6 @@ type Invitation struct {
 	ResourceType string
 	RoleId int64
 	Message string
+	AcceptedAt time.Time
+	Accepted bool
 }

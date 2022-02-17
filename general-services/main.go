@@ -28,7 +28,7 @@ func main() {
 
 func provideOptions() []fx.Option {
 	return []fx.Option{
-		fx.Provide(utils.ConfigureLogger),
+		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
 		fx.Invoke(func(config *config.Config) {
 			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
@@ -45,6 +45,7 @@ func provideOptions() []fx.Option {
 		fx.Provide(repos.NewRbacRepo),
 		fx.Provide(repos.NewVerifyEmailRepo),
 		fx.Provide(repos.NewInvitationRepo),
+		fx.Provide(repos.NewScriptsRepo),
 		fx.Provide(providers.GetProviders),
 		fx.Invoke(controllers.RegisterUserController),
 		fx.Invoke(controllers.RegisterAuthController),
@@ -52,6 +53,7 @@ func provideOptions() []fx.Option {
 		fx.Invoke(controllers.RegisterEmailController),
 		fx.Invoke(controllers.RegisterOrganizationController),
 		fx.Invoke(controllers.RegisterTeamsController),
+		fx.Invoke(controllers.RegisterScriptsController),
 	}
 }
 

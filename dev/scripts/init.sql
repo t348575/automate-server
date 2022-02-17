@@ -121,9 +121,11 @@ CREATE TABLE IF NOT EXISTS userdata.invitations
     user_id bigint NOT NULL,
     resource_id bigint NOT NULL,
     resource_type character varying(8) NOT NULL,
-    role_id bigint NOT NULL,
     message character varying(1024) NOT NULL,
-    PRIMARY KEY (id)
+    role_id bigint NOT NULL,
+    accepted_at timestamp without time zone,
+    accepted boolean NOT NULL DEFAULT false,
+    PRIMARY KEY (id, accepted)
 );
 
 ALTER TABLE IF EXISTS userdata.teams
@@ -255,7 +257,7 @@ ALTER TABLE IF EXISTS userdata.invitations
 
 
 ALTER TABLE IF EXISTS userdata.invitations
-    ADD FOREIGN KEY (role)
+    ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION

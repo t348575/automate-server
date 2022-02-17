@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "script-service",
+    "utils-rs",
+    "benches/script-service"
+]

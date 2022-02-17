@@ -8,6 +8,7 @@
         "pgdriver",
         "pkgz",
         "uptrace",
+        "xactor",
         "xhit"
     ]
 }

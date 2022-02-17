@@ -1,0 +1,25 @@
+[package]
+name = "script-service"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3.3.3"
+actix-web-actors="3.0.0"
+actix = "0.10.0"
+uuid = { version = "0.8", features = ["v4", "serde"] }
+log = "0.4.14"
+env_logger = "0.9.0"
+serde = "1.0.136"
+serde_json = "1.0.79"
+jsonwebtoken = "8.0.1"
+redis = "0.21.5"
+utils-rs = { path = "../utils-rs" }
+
+[profile.dev]
+opt-level = 0
+
+[profile.release]
+opt-level = 3

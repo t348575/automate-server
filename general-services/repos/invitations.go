@@ -2,6 +2,7 @@ package repos
 
 import (
 	"context"
+	"time"
 
 	"github.com/automate/automate-server/general-services/models/userdata"
 	"github.com/uptrace/bun"
@@ -32,4 +33,16 @@ func (c *InvitationRepo) HasInvitationToSpecific(ctx context.Context, userId, re
 	}
 
 	return *invite, nil
+}
+
+func (c *InvitationRepo) GetInvitation(ctx context.Context, inviteId string) (userdata.Invitation, error) {
+	invite := new(userdata.Invitation)
+	err := c.db.NewSelect().Model(invite).Where("id = ?", inviteId).Scan(ctx)
+	return *invite, err
+}
+
+func (c *InvitationRepo) AcceptInvite(ctx context.Context, inviteId string) error {
+	invite := new(userdata.Invitation)
+	_, err := c.db.NewUpdate().Model(invite).Set("accepted = ?", true).Set("accepted_at = ?", time.Now()).Where("id = ?", inviteId).Exec(ctx)
+	return err
 }

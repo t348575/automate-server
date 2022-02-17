@@ -20,6 +20,41 @@
             },
             "args": [],
             "problemMatcher": []
+        },
+        {
+            "label": "script-service",
+            "type": "shell",
+            "command": "cargo",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "RUST_BACKTRACE": "1",
+                    "RUST_LOG": "info"
+                }
+            },
+            "args": [
+                "run",
+                "--bin",
+                "script-service",
+                "--",
+                "-dev",
+                "-env",
+                "${workspaceFolder}/dev/env/script-service.dev.env"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "ws-test",
+            "type": "shell",
+            "command": "npm",
+            "options": {
+                "cwd": "${workspaceFolder}/testing/ws-client"
+            },
+            "args": [
+                "run",
+                "dev"
+            ],
+            "problemMatcher": []
         }
     ]
 }
