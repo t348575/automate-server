@@ -1,4 +1,3 @@
-use pulsar::{SerializeMessage, Error as PulsarError, producer, DeserializeMessage, Payload};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -8,9 +7,8 @@ pub struct Config {
     pub heartbeat_interval: u32,
     pub client_timeout: u32,
     pub jwt_private_key: String,
-    pub redis_conn: String,
+    pub service_discovery_url: String,
     pub general_services_url: String,
-    pub pulsar_conn: String,
     pub node_name: String
 }
 
@@ -38,24 +36,6 @@ pub enum Internal {
 #[derive(Serialize, Deserialize)]
 pub struct TestData {
     pub data: String,
-}
-
-impl SerializeMessage for TestData {
-    fn serialize_message(input: Self) -> Result<producer::Message, PulsarError> {
-        let payload = serde_json::to_vec(&input).map_err(|e| PulsarError::Custom(e.to_string()))?;
-        Ok(producer::Message {
-            payload,
-            ..Default::default()
-        })
-    }
-}
-
-impl DeserializeMessage for TestData {
-    type Output = Result<TestData, serde_json::Error>;
-
-    fn deserialize_message(payload: &Payload) -> Self::Output {
-        serde_json::from_slice(&payload.data)
-    }
 }
 
 impl Action {

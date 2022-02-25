@@ -78,23 +78,7 @@ fn main() {
     threads.push(thread::spawn(move || {
         let rt = tokio::runtime::Builder::new_multi_thread().max_blocking_threads(2).enable_all().build().expect("Failed to build runtime");
         rt.block_on(async {
-            let mut broker = broker::Broker::new(config.pulsar_conn.clone(), config.node_name.clone()).await;
-            
-            loop {
-                tokio::select! {
-                    result = broker.consumer.next() => {
-                        let msg = result.unwrap().unwrap();
-                        broker.consumer.ack(&msg).await.unwrap();
-                        
-                        let data = msg.deserialize().unwrap();
-                        info!("Received message from pulsar: {:?}", data.data);
-                    },
-                    result = rx.recv_async() => {
-                        broker.send(result.unwrap()).await.unwrap();
-                        info!("Sent message to pulsar");
-                    }
-                }
-            }
+            let mut broker = broker::Broker::new(config.service_discovery_url.clone(), config.node_name.clone()).await;
         })
     }));
 
