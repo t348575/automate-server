@@ -8,16 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type BaseConfig interface {
-	GetPort() string
-	GetTimeout() int
-	GetReadBufferSize() int
-	GetAppName() string
-	GetIsProduction() bool
-	GetCookieKey() string
-	GetBodyLimit() int
-}
-
 type Config struct {
 	Port                string        `env:"LISTEN_ADDR" envDefault:":3000"`
 	Timeout             uint64        `env:"TIMEOUT" envDefault:"10"`
@@ -74,32 +64,4 @@ func Parse() (*Config, error) {
 	cfg.JwtParsedPrivateKey = utils.ParsePrivateKey(cfg.JwtPrivateKey)
 
 	return &cfg, nil
-}
-
-func (c *Config) GetPort() string {
-	return c.Port
-}
-
-func (c *Config) GetTimeout() int {
-	return int(c.Timeout)
-}
-
-func (c *Config) GetReadBufferSize() int {
-	return c.ReadBufferSize
-}
-
-func (c *Config) GetAppName() string {
-	return c.AppName
-}
-
-func (c *Config) GetIsProduction() bool {
-	return c.IsProduction
-}
-
-func (c *Config) GetCookieKey() string {
-	return c.CookieKey
-}
-
-func (c *Config) GetBodyLimit() int {
-	return c.BodyLimit
 }

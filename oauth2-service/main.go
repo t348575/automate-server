@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/automate/automate-server/general-services/config"
 	"github.com/automate/automate-server/general-services/models"
 	"github.com/automate/automate-server/http-go"
 	"github.com/automate/automate-server/utils-go"
@@ -51,13 +50,6 @@ type userDetails struct {
 	ProviderDetails string
 }
 
-type socialTokenRequest struct {
-	ClientId     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	UserId       string `json:"user_id"`
-	Scope        string `json:"scope"`
-}
-
 type createUser struct {
 	Name     string `json:"name" validate:"required,min=3,max=128"`
 	Email    string `json:"email" validate:"required,email"`
@@ -92,7 +84,7 @@ func main() {
 
 	db = getDbConnection(c.Dsn)
 
-	app := http.CreateServer(&config.Config{
+	app := http.CreateServer(&http.Config{
 		Port:         c.Port,
 		IsProduction: c.IsProduction,
 		Timeout:      c.Timeout,
@@ -228,7 +220,7 @@ func createAccount(c *fiber.Ctx) error {
 		return utils.StandardInternalError(c, err)
 	}
 
-	code, body, errArr := a.SetResponse(res).Timeout(5 * time.Second).Bytes()
+	code, _, errArr := a.SetResponse(res).Timeout(5 * time.Second).Bytes()
 	if errArr != nil || len(errArr) != 0 {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"errors": func() []string {

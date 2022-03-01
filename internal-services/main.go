@@ -5,12 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/automate/automate-server/general-services/config"
-	"github.com/automate/automate-server/general-services/controllers"
-	"github.com/automate/automate-server/general-services/models"
-	"github.com/automate/automate-server/general-services/providers"
-	"github.com/automate/automate-server/general-services/repos"
 	"github.com/automate/automate-server/http-go"
+	"github.com/automate/automate-server/internal-services/config"
+	"github.com/automate/automate-server/internal-services/controllers"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -42,29 +39,9 @@ func provideOptions() []fx.Option {
 
 			return cfg, err
 		}),
-		fx.Invoke(func(config *config.Config) {
-			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
-		}),
-		fx.Provide(config.ProvidePostgres),
-		fx.Provide(config.ProvideSmtp),
+		fx.Provide(config.ProvideRedis),
 		fx.Provide(http.CreateServer),
 		fx.Provide(utils.GetDefaultRouter),
-		fx.Invoke(models.InitModelRegistrations),
-		fx.Provide(repos.NewOrganizationRepo),
-		fx.Provide(repos.NewTeamRepo),
-		fx.Provide(repos.NewUserRepo),
-		fx.Provide(repos.NewJobRepo),
-		fx.Provide(repos.NewRbacRepo),
-		fx.Provide(repos.NewVerifyEmailRepo),
-		fx.Provide(repos.NewInvitationRepo),
-		fx.Provide(repos.NewScriptsRepo),
-		fx.Provide(providers.GetProviders),
-		fx.Invoke(controllers.RegisterUserController),
-		fx.Invoke(controllers.RegisterAuthController),
-		fx.Invoke(controllers.RegisterRbacController),
-		fx.Invoke(controllers.RegisterEmailController),
-		fx.Invoke(controllers.RegisterOrganizationController),
-		fx.Invoke(controllers.RegisterTeamsController),
 		fx.Invoke(controllers.RegisterScriptsController),
 	}
 }

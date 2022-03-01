@@ -197,8 +197,8 @@ func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) (bool, 
 			var teamId int64
 			var err error
 			switch resource.IdLocation {
-				case "query":
-					teamId, err = strconv.ParseInt(ctx.Query("team_id"), 10, 64)
+			case "query":
+				teamId, err = strconv.ParseInt(ctx.Query("team_id"), 10, 64)
 			}
 			if err != nil {
 				return false, err

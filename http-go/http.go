@@ -6,7 +6,6 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/automate/automate-server/general-services/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
@@ -15,25 +14,37 @@ import (
 	"github.com/gofiber/helmet/v2"
 )
 
-func CreateServer(config *config.Config) *fiber.App {
+type Config struct {
+	Port           string `env:"LISTEN_ADDR" envDefault:":3000"`
+	Timeout        uint64 `env:"TIMEOUT" envDefault:"10"`
+	ReadBufferSize int    `env:"READ_BUFFER_SIZE" envDefault:"4096"`
+	BodyLimit      int    `env:"BODY_LIMIT" envDefault:"1048576"`
+	AppName        string `env:"APP_NAME" envDefault:"Automate"`
+	IsProduction   bool   `env:"PRODUCTION"`
+	CookieKey      string `env:"COOKIE_KEY"`
+}
+
+func CreateServer(config *Config) *fiber.App {
 	fiberConfig := fiber.Config{
-		AppName:        config.GetAppName(),
-		ReadTimeout:    time.Second * time.Duration(config.GetTimeout()),
-		WriteTimeout:   time.Second * time.Duration(config.GetTimeout()),
+		AppName:        config.AppName,
+		ReadTimeout:    time.Second * time.Duration(config.Timeout),
+		WriteTimeout:   time.Second * time.Duration(config.Timeout),
 		ProxyHeader:    fiber.HeaderXForwardedFor,
-		ReadBufferSize: config.GetReadBufferSize(),
-		BodyLimit:      config.GetBodyLimit(),
+		ReadBufferSize: config.ReadBufferSize,
+		BodyLimit:      config.BodyLimit,
 	}
 
-	if !config.GetIsProduction() {
+	if !config.IsProduction {
 		fiberConfig.EnablePrintRoutes = true
 	}
 
 	app := fiber.New(fiberConfig)
 
-	app.Use(encryptcookie.New(encryptcookie.Config{
-		Key: config.GetCookieKey(),
-	}))
+	if len(config.CookieKey) > 0 {
+		app.Use(encryptcookie.New(encryptcookie.Config{
+			Key: config.CookieKey,
+		}))
+	}
 
 	app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,
@@ -42,7 +53,7 @@ func CreateServer(config *config.Config) *fiber.App {
 		},
 	}))
 
-	if !config.GetIsProduction() {
+	if !config.IsProduction {
 		fmt.Println("Running in DEV mode")
 
 		app.Use(logger.New(logger.Config{

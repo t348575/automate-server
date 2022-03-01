@@ -23,7 +23,7 @@ services:
       interval: 60s
       timeout: 5s
       retries: 5
-  redis:
+  redis-internal:
     image: bitnami/redis
     environment:
       - REDIS_PASSWORD=password123
@@ -37,34 +37,11 @@ services:
       interval: 60s
       timeout: 5s
       retries: 5
-  pulsar:
-    image: apachepulsar/pulsar
-    ports:
-      - '6650:6650'
-      - '8080:8080'
-    environment:
-      PULSAR_MEM: " -Xms512m -Xmx512m -XX:MaxDirectMemorySize=1g"    
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - pulsar-admin
-        - broker-stats
-        - monitoring-metrics
-      interval: 60s
-      timeout: 5s
-      retries: 5
-    volumes:
-      - 'pulsardata:/pulsar/data'
-      - 'pulsarconf:/pulsar/conf'
-    command: bin/pulsar standalone
 
 volumes:
   db:
     driver: local
-  pulsardata:
-    driver: local
-  pulsarconf:
-    driver: local
+
 networks:
   common:
     driver: bridge

@@ -27,6 +27,16 @@ var (
 	errIncompatibleVersion = errors.New("incompatible version of argon2")
 )
 
+type BaseConfig interface {
+	GetPort() string
+	GetTimeout() int
+	GetReadBufferSize() int
+	GetAppName() string
+	GetIsProduction() bool
+	GetCookieKey() string
+	GetBodyLimit() int
+}
+
 func GenerateRandomBytes(size uint32) []byte {
 	token := make([]byte, size)
 	rand.Read(token)
