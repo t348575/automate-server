@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/automate/automate-server/general-services/models"
+	"github.com/automate/automate-server/general-service/models"
 	"github.com/automate/automate-server/http-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"

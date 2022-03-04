@@ -2,7 +2,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Start env",
+            "label": "start env",
             "type": "shell",
             "command": "./up.sh",
             "options": {
@@ -12,11 +12,21 @@
             "problemMatcher": []
         },
         {
-            "label": "Stop env",
+            "label": "stop env",
             "type": "shell",
             "command": "./down.sh",
             "options": {
                 "cwd": "${workspaceFolder}/dev/docker"
+            },
+            "args": [],
+            "problemMatcher": []
+        },
+        {
+            "label": "clean postgres",
+            "type": "shell",
+            "command": "./clean-postgres.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/dev/docker",
             },
             "args": [],
             "problemMatcher": []

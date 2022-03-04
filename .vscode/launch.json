@@ -5,15 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "general-services",
+            "name": "general-service",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "general-services",
+            "program": "general-service",
             "args": [
-                "--dev",
-                "--env",
-                "${workspaceFolder}/dev/env/general-services.dev.env"
+                "-dev",
+                "-env",
+                "${workspaceFolder}/dev/env/general-service.dev.env"
             ],
             "substitutePath": [
                 {
@@ -29,9 +29,21 @@
             "mode": "auto",
             "program": "oauth2-service",
             "args": [
-                "--dev",
-                "--env",
+                "-dev",
+                "-env",
                 "${workspaceFolder}/dev/env/oauth2-service.dev.env"
+            ]
+        },
+        {
+            "name": "internal-service",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "internal-service",
+            "args": [
+                "-dev",
+                "-env",
+                "${workspaceFolder}/dev/env/internal-service.dev.env"
             ]
         }
     ]

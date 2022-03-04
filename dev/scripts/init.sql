@@ -307,6 +307,34 @@ CREATE TABLE IF NOT EXISTS scripts.scripts
     PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS system.redis_nodes
+(
+    id bigserial NOT NULL,
+    host inet NOT NULL,
+    created_at timestamp NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS system.script_nodes
+(
+    redis_node bigint NOT NULL,
+    script_id bigint NOT NULL
+);
+
+ALTER TABLE IF EXISTS system.script_nodes
+    ADD FOREIGN KEY (script_id)
+    REFERENCES scripts.scripts (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
+ALTER TABLE IF EXISTS system.script_nodes
+    ADD FOREIGN KEY (redis_node)
+    REFERENCES system.redis_nodes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
 /* INITIAL VALUES */
 
 INSERT INTO rbac.actions(action) VALUES

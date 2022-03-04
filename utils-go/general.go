@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/automate/automate-server/general-services/models"
+	"github.com/automate/automate-server/general-service/models"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"

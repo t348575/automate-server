@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	joined_models "github.com/automate/automate-server/general-services/models/joined-models"
-	"github.com/automate/automate-server/general-services/models/userdata"
+	joined_models "github.com/automate/automate-server/general-service/models/joined-models"
+	"github.com/automate/automate-server/general-service/models/userdata"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/rs/zerolog/log"
