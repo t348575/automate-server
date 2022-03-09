@@ -1,6 +1,4 @@
 [workspace]
 members = [
-    "utils-rs",
-    "benches/script-service",
-    "script-service"
+    "utils-rs"
 ]

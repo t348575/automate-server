@@ -1,13 +1,18 @@
 {
     "cSpell.words": [
+        "brokersys",
         "caarlos",
         "deadpool",
+        "evmap",
         "godotenv",
         "gofiber",
+        "jsonwebtoken",
         "pgdb",
         "pgdialect",
         "pgdriver",
         "pkgz",
+        "thiserror",
+        "tungstenite",
         "uptrace",
         "xactor",
         "xhit"
