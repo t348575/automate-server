@@ -15,6 +15,7 @@ type Config struct {
 	IsProduction   bool   `env:"PRODUCTION"`
 	RedisUrl       string `env:"REDIS_URL"`
 	Dsn            string `env:"DSN"`
+	CookieKey      string
 }
 
 func Parse() (*Config, error) {

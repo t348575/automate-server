@@ -10,7 +10,7 @@ import (
 	"github.com/automate/automate-server/general-service/models"
 	"github.com/automate/automate-server/general-service/providers"
 	"github.com/automate/automate-server/general-service/repos"
-	"github.com/automate/automate-server/http-go"
+	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -31,13 +31,13 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Provide(func(c *config.Config) (*http.Config, error) {
+		fx.Provide(func(c *config.Config) (*server.Config, error) {
 			res, err := json.Marshal(c)
 			if err != nil {
 				return nil, err
 			}
 
-			cfg := new(http.Config)
+			cfg := new(server.Config)
 			err = json.Unmarshal(res, cfg)
 
 			return cfg, err
@@ -45,9 +45,9 @@ func provideOptions() []fx.Option {
 		fx.Invoke(func(config *config.Config) {
 			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
 		}),
-		fx.Provide(config.ProvidePostgres),
+		fx.Provide(utils.ProvidePostgres),
 		fx.Provide(config.ProvideSmtp),
-		fx.Provide(http.CreateServer),
+		fx.Provide(server.CreateServer),
 		fx.Provide(utils.GetDefaultRouter),
 		fx.Invoke(models.InitModelRegistrations),
 		fx.Provide(repos.NewOrganizationRepo),

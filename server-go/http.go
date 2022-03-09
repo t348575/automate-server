@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"fmt"
@@ -22,6 +22,7 @@ type Config struct {
 	AppName        string `env:"APP_NAME" envDefault:"Automate"`
 	IsProduction   bool   `env:"PRODUCTION"`
 	CookieKey      string `env:"COOKIE_KEY"`
+	Dsn            string `env:"DSN"`
 }
 
 func CreateServer(config *Config) *fiber.App {

@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/automate/automate-server/internal-service/config"
-	"github.com/automate/automate-server/internal-service/controllers"
-	"github.com/automate/automate-server/internal-service/repos"
+	"github.com/automate/automate-server/script-service/config"
 	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/websocket/v2"
 	"go.uber.org/fx"
 )
 
@@ -40,12 +39,16 @@ func provideOptions() []fx.Option {
 
 			return cfg, err
 		}),
-		fx.Provide(config.ProvideRedis),
-		fx.Provide(utils.ProvidePostgres),
 		fx.Provide(server.CreateServer),
-		fx.Provide(utils.GetDefaultRouter),
-		fx.Provide(repos.NewScriptNodeRepo),
-		fx.Invoke(controllers.RegisterScriptsController),
+		fx.Invoke(func(c *fiber.App) {
+			c.Use("/ws", func(c *fiber.Ctx) error {
+				if websocket.IsWebSocketUpgrade(c) {
+					c.Locals("allowed", true)
+					return c.Next()
+				}
+				return fiber.ErrUpgradeRequired
+			})
+		}),
 	}
 }
 

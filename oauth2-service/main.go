@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-service/models"
-	"github.com/automate/automate-server/http-go"
+	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -84,7 +84,7 @@ func main() {
 
 	db = getDbConnection(c.Dsn)
 
-	app := http.CreateServer(&http.Config{
+	app := server.CreateServer(&server.Config{
 		Port:         c.Port,
 		IsProduction: c.IsProduction,
 		Timeout:      c.Timeout,
