@@ -288,3 +288,15 @@ func SendEmail(url string, config *models.SendEmailConfig) error {
 
 	return nil
 }
+
+func ConvertConfig[T, S any](input T) (*S, error) {
+	res, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := new(S)
+	err = json.Unmarshal(res, cfg)
+
+	return cfg, err
+}

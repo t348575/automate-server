@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/automate/automate-server/server-go"
 	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -13,7 +12,12 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 )
 
-func ProvidePostgres(config *server.Config) (*bun.DB, error) {
+type PostgresConfig struct {
+	IsProduction bool   `env:"PRODUCTION"`
+	Dsn          string `env:"DSN"`
+}
+
+func ProvidePostgres(config *PostgresConfig) (*bun.DB, error) {
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(config.Dsn)))
 	db := bun.NewDB(pgdb, pgdialect.New())
 	if !config.IsProduction {

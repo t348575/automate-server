@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/automate/automate-server/internal-service/config"
@@ -29,17 +28,9 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Provide(func(c *config.Config) (*server.Config, error) {
-			res, err := json.Marshal(c)
-			if err != nil {
-				return nil, err
-			}
-
-			cfg := new(server.Config)
-			err = json.Unmarshal(res, cfg)
-
-			return cfg, err
-		}),
+		fx.Provide(utils.ConvertConfig[*config.Config, server.Config]),
+		fx.Provide(utils.ConvertConfig[*config.Config, utils.PostgresConfig]),
+		fx.Provide(utils.ConvertConfig[*config.Config, utils.RedisConfig]),
 		fx.Provide(config.ProvideRedis),
 		fx.Provide(utils.ProvidePostgres),
 		fx.Provide(server.CreateServer),

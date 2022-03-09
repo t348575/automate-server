@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/automate/automate-server/script-service/config"
@@ -28,17 +27,9 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Provide(func(c *config.Config) (*server.Config, error) {
-			res, err := json.Marshal(c)
-			if err != nil {
-				return nil, err
-			}
-
-			cfg := new(server.Config)
-			err = json.Unmarshal(res, cfg)
-
-			return cfg, err
-		}),
+		fx.Provide(utils.ConvertConfig[*config.Config, server.Config]),
+		fx.Provide(utils.ConvertConfig[*config.Config, utils.RedisConfig]),
+		fx.Provide(utils.ProvideRedis),
 		fx.Provide(server.CreateServer),
 		fx.Invoke(func(c *fiber.App) {
 			c.Use("/ws", func(c *fiber.Ctx) error {
