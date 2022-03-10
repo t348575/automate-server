@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/script-service/config"
+	"github.com/automate/automate-server/script-service/controllers"
 	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
@@ -31,15 +32,8 @@ func provideOptions() []fx.Option {
 		fx.Provide(utils.ConvertConfig[*config.Config, utils.RedisConfig]),
 		fx.Provide(utils.ProvideRedis),
 		fx.Provide(server.CreateServer),
-		fx.Invoke(func(c *fiber.App) {
-			c.Use("/ws", func(c *fiber.Ctx) error {
-				if websocket.IsWebSocketUpgrade(c) {
-					c.Locals("allowed", true)
-					return c.Next()
-				}
-				return fiber.ErrUpgradeRequired
-			})
-		}),
+		fx.Invoke(upgradeRoutes),
+		fx.Invoke(controllers.RegisterRoomController),
 	}
 }
 
@@ -63,4 +57,20 @@ func run(app *fiber.App, config *config.Config, lc fx.Lifecycle) {
 			return app.Shutdown()
 		},
 	})
+}
+
+func upgradeRoutes(app *fiber.App) {
+	routes := []string{
+		"/room",
+	}
+
+	for _, route := range routes {
+		app.Use(route, func(c *fiber.Ctx) error {
+			if websocket.IsWebSocketUpgrade(c) {
+				c.Locals("allowed", true)
+				return c.Next()
+			}
+			return fiber.ErrUpgradeRequired
+		})
+	}
 }

@@ -45,6 +45,18 @@
                 "-env",
                 "${workspaceFolder}/dev/env/internal-service.dev.env"
             ]
+        },
+        {
+            "name": "script-service",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "script-service",
+            "args": [
+                "-dev",
+                "-env",
+                "${workspaceFolder}/dev/env/script-service.dev.env"
+            ]
         }
     ]
 }

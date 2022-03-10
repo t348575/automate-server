@@ -31,7 +31,7 @@ func provideOptions() []fx.Option {
 		fx.Provide(utils.ConvertConfig[*config.Config, server.Config]),
 		fx.Provide(utils.ConvertConfig[*config.Config, utils.PostgresConfig]),
 		fx.Provide(utils.ConvertConfig[*config.Config, utils.RedisConfig]),
-		fx.Provide(config.ProvideRedis),
+		fx.Provide(utils.ProvideRedis),
 		fx.Provide(utils.ProvidePostgres),
 		fx.Provide(server.CreateServer),
 		fx.Provide(utils.GetDefaultRouter),
