@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/automate/automate-server/general-service/models/userdata"
+	"github.com/automate/automate-server/models/userdata"
 	"github.com/uptrace/bun"
 )
 

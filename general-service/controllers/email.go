@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/models"
-	"github.com/automate/automate-server/general-service/models/system"
 	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/models"
+	"github.com/automate/automate-server/models/system"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"

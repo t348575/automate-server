@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	models "github.com/automate/automate-server/general-service/models/system"
+	models "github.com/automate/automate-server/models/system"
 	"github.com/uptrace/bun"
 )
 

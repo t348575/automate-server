@@ -3,7 +3,7 @@ package userdata
 import (
 	"strconv"
 
-	"github.com/automate/automate-server/general-service/models/rbac"
+	"github.com/automate/automate-server/models/rbac"
 	"github.com/uptrace/bun"
 )
 

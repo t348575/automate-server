@@ -2,6 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "gofmt",
+            "type": "shell",
+            "command": "gofmt",
+            "options": {
+                "cwd": "${workspaceFolder}",
+            },
+            "args": [
+                "-l",
+                "-s",
+                "-w",
+                "."
+            ],
+            "problemMatcher": []
+        },
+        {
             "label": "start env",
             "type": "shell",
             "command": "./up.sh",

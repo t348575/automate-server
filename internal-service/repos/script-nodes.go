@@ -3,7 +3,7 @@ package repos
 import (
 	"context"
 
-	"github.com/automate/automate-server/internal-service/models"
+	"github.com/automate/automate-server/models/system"
 	"github.com/uptrace/bun"
 )
 
@@ -15,18 +15,18 @@ func NewScriptNodeRepo(db *bun.DB) *ScriptNodeRepo {
 	return &ScriptNodeRepo{db: db}
 }
 
-func (c *ScriptNodeRepo) IsScriptNodeAssigned(ctx context.Context, scriptId int64) (*models.RedisNode, error) {
-	model := new(models.ScriptNode)
+func (c *ScriptNodeRepo) IsScriptNodeAssigned(ctx context.Context, scriptId int64) (*system.RedisNode, error) {
+	model := new(system.ScriptNode)
 	err := c.db.NewSelect().Model(model).Where("script_id = ?", scriptId).Limit(1).Scan(ctx)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
-			return &models.RedisNode{}, nil
+			return &system.RedisNode{}, nil
 		}
 
 		return nil, err
 	}
 
-	node := new(models.RedisNode)
+	node := new(system.RedisNode)
 	err = c.db.NewSelect().Model(node).Where("id = ?", model.RedisNode).Limit(1).Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -34,14 +34,14 @@ func (c *ScriptNodeRepo) IsScriptNodeAssigned(ctx context.Context, scriptId int6
 	return node, nil
 }
 
-func (c *ScriptNodeRepo) CountScripts(ctx context.Context) (models.ScriptNode, error) {
-	var node models.ScriptNode
+func (c *ScriptNodeRepo) CountScripts(ctx context.Context) (system.ScriptNode, error) {
+	var node system.ScriptNode
 	err := c.db.NewSelect().Model(&node).ExcludeColumn("script_id").ColumnExpr("COUNT(redis_node) as count").GroupExpr("redis_node").Limit(1).Scan(ctx)
 	return node, err
 }
 
 func (c *ScriptNodeRepo) SetScriptNode(ctx context.Context, scriptId, nodeId int64) error {
-	_, err := c.db.NewInsert().Model(&models.ScriptNode{
+	_, err := c.db.NewInsert().Model(&system.ScriptNode{
 		ScriptId:  scriptId,
 		RedisNode: nodeId,
 	}).Exec(ctx)
@@ -49,7 +49,7 @@ func (c *ScriptNodeRepo) SetScriptNode(ctx context.Context, scriptId, nodeId int
 }
 
 func (c *ScriptNodeRepo) DoesNodeExist(ctx context.Context, nodeId int64) (bool, error) {
-	node := new(models.ScriptNode)
+	node := new(system.ScriptNode)
 	err := c.db.NewSelect().Model(node).Where("redis_node = ?", nodeId).Limit(1).Scan(ctx)
 
 	if err != nil {
@@ -63,8 +63,8 @@ func (c *ScriptNodeRepo) DoesNodeExist(ctx context.Context, nodeId int64) (bool,
 	return true, nil
 }
 
-func (c *ScriptNodeRepo) GetFirstNode(ctx context.Context) (*models.RedisNode, error) {
-	node := new(models.RedisNode)
+func (c *ScriptNodeRepo) GetFirstNode(ctx context.Context) (*system.RedisNode, error) {
+	node := new(system.RedisNode)
 	err := c.db.NewSelect().Model(node).Limit(1).Scan(ctx)
 	return node, err
 }

@@ -6,9 +6,9 @@ import (
 
 	"github.com/automate/automate-server/general-service/config"
 	"github.com/automate/automate-server/general-service/controllers"
-	"github.com/automate/automate-server/general-service/models"
 	"github.com/automate/automate-server/general-service/providers"
 	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/models"
 	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"

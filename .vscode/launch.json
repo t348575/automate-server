@@ -15,12 +15,6 @@
                 "-env",
                 "${workspaceFolder}/dev/env/general-service.dev.env"
             ],
-            "substitutePath": [
-                {
-                    "from": "/home/joefe/repos/automate/automate-server",
-                    "to": "/mnt/windows/Users/joefe/source/repos/automate/automate-server",
-                },
-            ]
         },
         {
             "name": "oauth2-service",

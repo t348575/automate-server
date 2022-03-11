@@ -1,9 +1,9 @@
 package models
 
 import (
-	joined_models "github.com/automate/automate-server/general-service/models/joined-models"
-	"github.com/automate/automate-server/general-service/models/rbac"
-	"github.com/automate/automate-server/general-service/models/userdata"
+	joined_models "github.com/automate/automate-server/models/joined-models"
+	"github.com/automate/automate-server/models/rbac"
+	"github.com/automate/automate-server/models/userdata"
 	"github.com/uptrace/bun"
 )
 

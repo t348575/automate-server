@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"sort"
 
-	joined_models "github.com/automate/automate-server/general-service/models/joined-models"
-	"github.com/automate/automate-server/general-service/models/rbac"
+	joined_models "github.com/automate/automate-server/models/joined-models"
+	"github.com/automate/automate-server/models/rbac"
 	"github.com/uptrace/bun"
 )
 

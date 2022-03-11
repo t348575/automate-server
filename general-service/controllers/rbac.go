@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/models/rbac"
 	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/models/rbac"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"

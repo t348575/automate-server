@@ -6,10 +6,10 @@ import (
 	"errors"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/models"
-	joined_models "github.com/automate/automate-server/general-service/models/joined-models"
-	"github.com/automate/automate-server/general-service/models/userdata"
 	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/models"
+	joined_models "github.com/automate/automate-server/models/joined-models"
+	"github.com/automate/automate-server/models/userdata"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"

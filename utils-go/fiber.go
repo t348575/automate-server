@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	joined_models "github.com/automate/automate-server/general-service/models/joined-models"
-	"github.com/automate/automate-server/general-service/models/userdata"
+	joined_models "github.com/automate/automate-server/models/joined-models"
+	"github.com/automate/automate-server/models/userdata"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/rs/zerolog/log"
@@ -45,11 +45,12 @@ type JwtMiddlewareConfig struct {
 }
 
 type ResourceActions struct {
-	Resource   string
-	Actions    []string
-	Type       string
-	UseId      bool
-	IdLocation string
+	Resource     string
+	Actions      []string
+	Type         string
+	UseId        bool
+	IdLocation   string
+	AllowPartial bool
 }
 type ErrorResponse struct {
 	FailedField string
@@ -137,7 +138,6 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 			c.Locals("user", id)
 
 			if len(config.ResourceActions) > 0 {
-				ValidateRoles(&config, c, id)
 				valid, err := ValidateRoles(&config, c, id)
 				if err != nil {
 					return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
@@ -172,7 +172,7 @@ func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) (bool, 
 
 		if resource.Type == "org" {
 			user := new(userdata.User)
-			err := c.Db.NewSelect().Model(user).Column("id").Relation("UserOrganizationRoles").Relation("UserOrganizationRoles.ResourceActions").Relation("UserOrganizationRoles.ResourceActions.Resource", func(q *bun.SelectQuery) *bun.SelectQuery {
+			err := c.Db.NewSelect().Model(user).Column("id", "organization_id").Relation("UserOrganizationRoles").Relation("UserOrganizationRoles.ResourceActions").Relation("UserOrganizationRoles.ResourceActions.Resource", func(q *bun.SelectQuery) *bun.SelectQuery {
 				return q.Where("resource = ?", resource.Resource).WhereGroup(" AND ", func(qInner *bun.SelectQuery) *bun.SelectQuery {
 					for _, action := range resource.Actions {
 						qInner = qInner.WhereOr("action = ?", action)
@@ -187,7 +187,7 @@ func ValidateRoles(c *JwtMiddlewareConfig, ctx *fiber.Ctx, userId int64) (bool, 
 			for _, userOrgRole := range user.UserOrganizationRoles {
 				if len(userOrgRole.ResourceActions) == len(resource.Actions) {
 					thisValid = true
-					ctx.Locals("org", userOrgRole.OrganizationId)
+					ctx.Locals("org", user.OrganizationId)
 					break
 				}
 			}

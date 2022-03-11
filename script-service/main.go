@@ -67,7 +67,6 @@ func upgradeRoutes(app *fiber.App) {
 	for _, route := range routes {
 		app.Use(route, func(c *fiber.Ctx) error {
 			if websocket.IsWebSocketUpgrade(c) {
-				c.Locals("allowed", true)
 				return c.Next()
 			}
 			return fiber.ErrUpgradeRequired
