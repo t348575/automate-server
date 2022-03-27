@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
 	"github.com/automate/automate-server/models"
 	"github.com/automate/automate-server/models/system"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -45,13 +45,13 @@ var (
 	emailTemplateDir string
 )
 
-func RegisterEmailController(r *utils.Router, config *config.Config, c EmailController) {
+func RegisterEmailController(app *fiber.App, config *config.Config, c EmailController) {
 	emailTemplateDir = config.Directories.EmailTemplates
 
 	splitSize = config.EmailConfig.SplitSize
 	from = config.EmailConfig.SmtpUser
 
-	r.Post("/email/send", c.sendEmailList)
+	app.Post("/email/send", c.sendEmailList)
 }
 
 func (r *EmailController) sendEmailList(c *fiber.Ctx) error {

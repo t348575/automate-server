@@ -26,15 +26,15 @@ var (
 	clientSecret string
 )
 
-func RegisterAuthController(r *utils.Router, config *config.Config, c AuthController) {
+func RegisterAuthController(app *fiber.App, config *config.Config, c AuthController) {
 	redirectUri = config.RedirectUri
 	clientId = config.AuthProviders.EmailClient
 	clientSecret = config.AuthProviders.EmailSecret
 
-	r.Get("/auth/:provider/login", c.login)
-	r.Post("/auth/:provider/callback", c.callback)
-	r.Get("/auth/:provider/callback", c.callback)
-	r.Post("/auth/refresh", c.refresh)
+	app.Post("/auth/:provider/callback", c.callback)
+	app.Get("/auth/:provider/login", c.login)
+	app.Get("/auth/:provider/callback", c.callback)
+	app.Post("/auth/refresh", c.refresh)
 }
 
 func (r *AuthController) login(c *fiber.Ctx) error {

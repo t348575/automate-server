@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/automate/automate-server/models/userdata"
+	"github.com/automate/automate-server/utils-go"
 	"github.com/uptrace/bun"
 )
 
@@ -44,4 +45,10 @@ func (c *TeamRepo) GetTeam(ctx context.Context, teamId int64) (userdata.Team, er
 	team := userdata.Team{}
 	err := c.db.NewSelect().Model(&team).Where("id = ?", teamId).Scan(ctx)
 	return team, err
+}
+
+func (c *TeamRepo) GetUserTeams(ctx context.Context, userId int64) ([]int64, error) {
+	teams := make([]userdata.TeamToUser, 0)
+	err := c.db.NewSelect().Model(&teams).Where("user_id = ?", userId).Scan(ctx)
+	return utils.MapList(&teams, func(a *userdata.TeamToUser) int64 { return a.TeamId }), err
 }

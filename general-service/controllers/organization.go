@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
@@ -19,8 +19,8 @@ type OrganizationController struct {
 	RbacRepo *repos.RbacRepo
 }
 
-func RegisterOrganizationController(r *utils.Router, config *config.Config, c OrganizationController) {
-	r.Post("/organization/create", utils.Protected(standardRoute), c.createOrganization)
+func RegisterOrganizationController(app *fiber.App, config *config.Config, c OrganizationController) {
+	app.Post("/organization/create", utils.Protected(standardRoute), c.createOrganization)
 }
 
 type createOrgConfig struct {

@@ -6,10 +6,10 @@ import (
 	"errors"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
 	"github.com/automate/automate-server/models"
 	joined_models "github.com/automate/automate-server/models/joined-models"
 	"github.com/automate/automate-server/models/userdata"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
@@ -25,8 +25,8 @@ type TeamsController struct {
 	InviteRepo *repos.InvitationRepo
 }
 
-func RegisterTeamsController(r *utils.Router, config *config.Config, db *bun.DB, c TeamsController) {
-	r.Post("/teams/create", utils.Protected(utils.JwtMiddlewareConfig{
+func RegisterTeamsController(app *fiber.App, config *config.Config, db *bun.DB, c TeamsController) {
+	app.Post("/teams/create", utils.Protected(utils.JwtMiddlewareConfig{
 		ReadFrom: "header",
 		Subject:  "access",
 		Scopes:   []string{"basic"},
@@ -41,7 +41,7 @@ func RegisterTeamsController(r *utils.Router, config *config.Config, db *bun.DB,
 		Db: db,
 	}), c.createTeam)
 
-	r.Post("/teams/invite", utils.Protected(utils.JwtMiddlewareConfig{
+	app.Post("/teams/invite", utils.Protected(utils.JwtMiddlewareConfig{
 		ReadFrom: "header",
 		Subject:  "access",
 		Scopes:   []string{"basic"},
@@ -56,7 +56,7 @@ func RegisterTeamsController(r *utils.Router, config *config.Config, db *bun.DB,
 		Db: db,
 	}), c.inviteUser)
 
-	r.Post("/teams/invite/accept/:id", utils.Protected(utils.JwtMiddlewareConfig{
+	app.Post("/teams/invite/accept/:id", utils.Protected(utils.JwtMiddlewareConfig{
 		ReadFrom: "header",
 		Subject:  "access",
 		Scopes:   []string{"basic"},

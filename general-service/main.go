@@ -7,8 +7,8 @@ import (
 	"github.com/automate/automate-server/general-service/config"
 	"github.com/automate/automate-server/general-service/controllers"
 	"github.com/automate/automate-server/general-service/providers"
-	"github.com/automate/automate-server/general-service/repos"
 	"github.com/automate/automate-server/models"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
@@ -30,15 +30,14 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Provide(utils.ConvertConfig[*config.Config, server.Config]),
-		fx.Provide(utils.ConvertConfig[*config.Config, utils.PostgresConfig]),
+		fx.Provide(utils.ConvertConfig[config.Config, server.Config]),
+		fx.Provide(utils.ConvertConfig[config.Config, utils.PostgresConfig]),
 		fx.Invoke(func(config *config.Config) {
 			utils.InitSharedConstants(*utils.ParsePublicKey(config.JwtPublicKey))
 		}),
 		fx.Provide(utils.ProvidePostgres),
 		fx.Provide(config.ProvideSmtp),
 		fx.Provide(server.CreateServer),
-		fx.Provide(utils.GetDefaultRouter),
 		fx.Invoke(models.InitModelRegistrations),
 		fx.Provide(repos.NewOrganizationRepo),
 		fx.Provide(repos.NewTeamRepo),

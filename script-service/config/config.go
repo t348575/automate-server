@@ -7,16 +7,13 @@ import (
 )
 
 type Config struct {
-	Port             string `env:"LISTEN_ADDR" envDefault:":3000"`
-	Timeout          uint64 `env:"TIMEOUT" envDefault:"10"`
-	ReadBufferSize   int    `env:"READ_BUFFER_SIZE" envDefault:"4096"`
-	BodyLimit        int    `env:"BODY_LIMIT" envDefault:"1048576"`
-	AppName          string `env:"APP_NAME" envDefault:"Automate"`
-	IsProduction     bool   `env:"PRODUCTION"`
-	RedisUrl         string `env:"REDIS_URL"`
-	Dsn              string `env:"DSN"`
-	InternalServices string `env:"INTERNAL_SERVICES"`
-	JwtPublicKey     string `env:"JWT_PUBLIC_KEY"`
+	Port            string `env:"LISTEN_ADDR" envDefault:":3000"`
+	Timeout         uint64 `env:"TIMEOUT" envDefault:"10"`
+	ReadBufferSize  int    `env:"READ_BUFFER_SIZE" envDefault:"4096"`
+	BodyLimit       int    `env:"BODY_LIMIT" envDefault:"1048576"`
+	AppName         string `env:"APP_NAME" envDefault:"Automate"`
+	IsProduction    bool   `env:"PRODUCTION"`
+	InternalService string `env:"INTERNAL_SERVICE"`
 }
 
 func Parse() (*Config, error) {

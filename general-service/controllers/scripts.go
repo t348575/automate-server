@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
-	"github.com/automate/automate-server/utils-go"
+	"github.com/automate/automate-server/repos"
+	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
 
@@ -13,6 +13,6 @@ type ScriptController struct {
 	Repo *repos.ScriptsRepo
 }
 
-func RegisterScriptsController(r *utils.Router, config *config.Config, c ScriptController) {
+func RegisterScriptsController(app *fiber.App, config *config.Config, c ScriptController) {
 
 }

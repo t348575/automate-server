@@ -9,10 +9,12 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/automate/automate-server/models"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
@@ -75,12 +77,23 @@ func ParseFlags() bool {
 		log.Panic().Err(err).Msg("Could not load .env file")
 	}
 
+	println(os.Environ())
+
 	return !*devMode
 }
 
 func IsInList(item string, list *[]string) int {
 	for i, val := range *list {
 		if val == item {
+			return i
+		}
+	}
+	return -1
+}
+
+func IsInObjList[T any, S comparable](item S, list *[]T, map_item func(a *T) S) int {
+	for i, val := range *list {
+		if map_item(&val) == item {
 			return i
 		}
 	}
@@ -289,14 +302,53 @@ func SendEmail(url string, config *models.SendEmailConfig) error {
 	return nil
 }
 
-func ConvertConfig[T, S any](input T) (*S, error) {
-	res, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
+// func ConvertConfig[T, S any](input T) (*S, error) {
+// 	res, err := json.Marshal(input)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	cfg := new(S)
+// 	err = json.Unmarshal(res, cfg)
+
+// 	return cfg, err
+// }
+
+func ConvertConfig[T, S any](c *T) (*S, error) {
+	cfg := new(S)
+	opts := env.Options{
+		Environment: func() map[string]string {
+			temp := make(map[string]string, 0)
+			for _, v := range os.Environ() {
+				kv := strings.SplitN(v, "=", 2)
+				temp[kv[0]] = kv[1]
+			}
+			return temp
+		}(),
 	}
 
-	cfg := new(S)
-	err = json.Unmarshal(res, cfg)
+	if err := env.Parse(cfg, opts); err != nil {
+		log.Panic().Err(err).Msg("Failed to parse env config")
+	}
 
-	return cfg, err
+	return cfg, nil
+}
+
+func MapList[T any, S any](list *[]T, accessor func(a *T) S) []S {
+	newList := make([]S, len(*list))
+	for i, v := range *list {
+		newList[i] = accessor(&v)
+	}
+	return newList
+}
+
+func Min[T any](list []T, accessor func(a *T, b *T) bool) (T, int) {
+	min := list[0]
+	i := 0
+	for ; i < len(list); i++ {
+		if accessor(&min, &list[i]) {
+			min = list[i]
+		}
+	}
+	return min, i
 }

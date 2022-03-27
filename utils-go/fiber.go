@@ -9,6 +9,7 @@ import (
 
 	joined_models "github.com/automate/automate-server/models/joined-models"
 	"github.com/automate/automate-server/models/userdata"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
 	"github.com/rs/zerolog/log"
@@ -36,58 +37,63 @@ type RefreshRequest struct {
 type Router struct {
 	fiber.Router
 }
-type JwtMiddlewareConfig struct {
-	ReadFrom        string
-	Subject         string
-	Scopes          []string
-	ResourceActions []ResourceActions
-	Db              *bun.DB
-}
 
-type ResourceActions struct {
-	Resource     string
-	Actions      []string
-	Type         string
-	UseId        bool
-	IdLocation   string
-	AllowPartial bool
-}
 type ErrorResponse struct {
 	FailedField string
 	Tag         string
 	Value       string
 }
 
-func GetDefaultRouter(app *fiber.App) *Router {
-	temp := app.Group("")
-	return &Router{Router: temp}
+type JwtMiddlewareConfig struct {
+	ReadFrom        string
+	Subject         string
+	Scopes          []string
+	ResourceActions []ResourceActions
+	Db              *bun.DB
+	Extra           map[string]string
+}
+
+type ResourceActions struct {
+	Resource   string
+	Actions    []string
+	Type       string
+	UseId      bool
+	IdLocation string
 }
 
 func InitSharedConstants(pubKey rsa.PublicKey) {
 	publicKey = pubKey
 }
 
+func GetAuthorizationHeader(config *JwtMiddlewareConfig, c *fiber.Ctx) (string, error) {
+	if config.ReadFrom == "header" {
+		auth := c.Get("Authorization")
+		l := len(authScheme)
+		if len(auth) > l+1 && strings.EqualFold(auth[:l], authScheme) {
+			return auth[l+1:], nil
+		}
+
+		return "", errors.New("Missing or malformed JWT")
+	} else if config.ReadFrom == "cookie" {
+		token := c.Cookies("accessToken")
+		if token == "" {
+			return "", errors.New("Missing or malformed JWT")
+		}
+
+		return token, nil
+	} else if config.ReadFrom == "extra" {
+		if len(config.Extra["token"]) == 0 {
+			return "", errors.New("Missing or malformed JWT")
+		}
+
+		return config.Extra["token"], nil
+	}
+	return "", errors.New("Invalid token read location")
+}
+
 func Protected(config JwtMiddlewareConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		rawToken, err := func() (string, error) {
-			if config.ReadFrom == "header" {
-				auth := c.Get("Authorization")
-				l := len(authScheme)
-				if len(auth) > l+1 && strings.EqualFold(auth[:l], authScheme) {
-					return auth[l+1:], nil
-				}
-
-				return "", errors.New("Missing or malformed JWT")
-			} else if config.ReadFrom == "cookie" {
-				token := c.Cookies("accessToken")
-				if token == "" {
-					return "", errors.New("Missing or malformed JWT")
-				}
-
-				return token, nil
-			}
-			return "", errors.New("Invalid token read location")
-		}()
+		rawToken, err := GetAuthorizationHeader(&config, c)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error":             "access_denied",
@@ -152,6 +158,10 @@ func Protected(config JwtMiddlewareConfig) fiber.Handler {
 						"error_description": "Invalid permissions",
 					})
 				}
+			}
+
+			if config.ReadFrom == "extra" {
+				return nil
 			}
 
 			return c.Next()
@@ -275,4 +285,15 @@ func StandardCouldNotParse(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 		"error": "Could not parse request",
 	})
+}
+
+func StandardBodyParse[T any](c *fiber.Ctx, v *T) error {
+	if err := c.BodyParser(v); err != nil {
+		return StandardCouldNotParse(c)
+	}
+
+	if err := ValidateStruct(validator.New().Struct(*v)); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(err)
+	}
+	return nil
 }

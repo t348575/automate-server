@@ -3,9 +3,9 @@ package controllers
 import (
 	"strconv"
 
-	"github.com/automate/automate-server/internal-service/repos"
+	"github.com/automate/automate-server/models"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
-	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -23,19 +23,10 @@ func RegisterScriptsController(app *fiber.App, c ScriptsController) {
 	r.Post("/stream", c.NewScriptRoom)
 }
 
-type NewScriptRoom struct {
-	ScriptId int64 `json:"script_id" validate:"required,number,min=1"`
-	User     int64 `json:"user_id" validate:"required,number,min=1"`
-}
-
 func (r *ScriptsController) NewScriptRoom(c *fiber.Ctx) error {
-	config := new(NewScriptRoom)
-	if err := c.BodyParser(config); err != nil {
-		return utils.StandardCouldNotParse(c)
-	}
-
-	if err := utils.ValidateStruct(validator.New().Struct(*config)); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(err)
+	config := new(models.NewScriptRoom)
+	if err := utils.StandardBodyParse(c, config); err != nil {
+		return err
 	}
 
 	redisNode, err := r.NodeRepo.IsScriptNodeAssigned(c.Context(), config.ScriptId)

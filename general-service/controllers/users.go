@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
 
@@ -25,11 +25,11 @@ var (
 	standardRbacDir string
 )
 
-func RegisterUserController(r *utils.Router, config *config.Config, c UserController) {
+func RegisterUserController(app *fiber.App, config *config.Config, c UserController) {
 	oAuthService = config.OAuthService
 	standardRbacDir = config.Directories.RbacDir
 
-	users := r.Group("/users")
+	users := app.Group("/users")
 
 	users.Get("/profile", utils.Protected(standardRoute), c.userProfile)
 	users.Get("/verify", c.verifyEmail)

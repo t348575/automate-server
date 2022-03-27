@@ -6,7 +6,8 @@ import (
 
 	"github.com/automate/automate-server/internal-service/config"
 	"github.com/automate/automate-server/internal-service/controllers"
-	"github.com/automate/automate-server/internal-service/repos"
+	"github.com/automate/automate-server/models"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/server-go"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/gofiber/fiber/v2"
@@ -28,13 +29,13 @@ func provideOptions() []fx.Option {
 	return []fx.Option{
 		fx.Invoke(utils.ConfigureLogger),
 		fx.Provide(config.Parse),
-		fx.Provide(utils.ConvertConfig[*config.Config, server.Config]),
-		fx.Provide(utils.ConvertConfig[*config.Config, utils.PostgresConfig]),
-		fx.Provide(utils.ConvertConfig[*config.Config, utils.RedisConfig]),
+		fx.Provide(utils.ConvertConfig[config.Config, server.Config]),
+		fx.Provide(utils.ConvertConfig[config.Config, utils.PostgresConfig]),
+		fx.Provide(utils.ConvertConfig[config.Config, utils.RedisConfig]),
 		fx.Provide(utils.ProvideRedis),
 		fx.Provide(utils.ProvidePostgres),
+		fx.Invoke(models.InitModelRegistrations),
 		fx.Provide(server.CreateServer),
-		fx.Provide(utils.GetDefaultRouter),
 		fx.Provide(repos.NewScriptNodeRepo),
 		fx.Invoke(controllers.RegisterScriptsController),
 	}

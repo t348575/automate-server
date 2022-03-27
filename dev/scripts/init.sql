@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS userdata.users
 (
     id bigserial NOT NULL,
     name character varying(128) NOT NULL,
-    email character varying(320) NOT NULL UNIQUE,
+    email character varying(320) NOT NULL,
     provider character varying(16) NOT NULL,
     provider_details jsonb NOT NULL,
     password character varying(512),
@@ -126,6 +126,73 @@ CREATE TABLE IF NOT EXISTS userdata.invitations
     accepted_at timestamp without time zone,
     accepted boolean NOT NULL DEFAULT false,
     PRIMARY KEY (id, accepted)
+);
+
+CREATE TABLE IF NOT EXISTS system.batch_jobs
+(
+    id bigserial NOT NULL,
+    service character varying(16) NOT NULL,
+    item character varying(1) NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    status boolean NOT NULL,
+    done bigint NOT NULL,
+    total bigint NOT NULL,
+    details jsonb NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS system.verify_email
+(
+    user_id bigint NOT NULL,
+    code character varying(64) NOT NULL,
+    expiry timestamp without time zone NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS system.redis_nodes
+(
+    id bigserial NOT NULL,
+    host inet NOT NULL,
+    created_at timestamp without time zone NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS system.script_nodes
+(
+    redis_node bigint NOT NULL,
+    script_id bigint NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS scripts.scripts
+(
+    id bigserial NOT NULL,
+    name character varying(128) NOT NULL,
+    throttle bigint NOT NULL,
+    max_runs bigint NOT NULL,
+    pause_at jsonb NOT NULL,
+    scale jsonb NOT NULL,
+    logs jsonb NOT NULL,
+    executor_type character varying(8) NOT NULL,
+    executor_config jsonb NOT NULL,
+    max_runtime bigint NOT NULL,
+    step_max_runtime bigint NOT NULL,
+    secrets jsonb NOT NULL,
+    linked_type character varying(8) NOT NULL,
+    linked_id bigint NOT NULL,
+    created_by bigint NOT NULL,
+    updated_by bigint NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS scripts.script_access
+(
+    script_id bigint NOT NULL,
+    access_id bigint NOT NULL,
+    action_id bigint NOT NULL,
+    access_type character varying(16),
+    PRIMARY KEY (script_id, access_id, action_id)
 );
 
 ALTER TABLE IF EXISTS userdata.teams
@@ -224,7 +291,7 @@ ALTER TABLE IF EXISTS rbac.user_team_roles
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS userdata.user_organization_roles
+ALTER TABLE IF EXISTS rbac.user_organization_roles
     ADD FOREIGN KEY (user_id)
     REFERENCES userdata.users (id) MATCH SIMPLE
     ON UPDATE NO ACTION
@@ -232,7 +299,7 @@ ALTER TABLE IF EXISTS userdata.user_organization_roles
     NOT VALID;
 
 
-ALTER TABLE IF EXISTS userdata.user_organization_roles
+ALTER TABLE IF EXISTS rbac.user_organization_roles
     ADD FOREIGN KEY (role_id)
     REFERENCES rbac.roles (id) MATCH SIMPLE
     ON UPDATE NO ACTION
@@ -263,63 +330,14 @@ ALTER TABLE IF EXISTS userdata.invitations
     ON DELETE NO ACTION
     NOT VALID;
 
-CREATE TABLE IF NOT EXISTS system.batch_jobs
-(
-    id bigserial NOT NULL,
-    service character varying(16) NOT NULL,
-    item character varying(1) NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    status boolean NOT NULL,
-    done bigint NOT NULL,
-    total bigint NOT NULL,
-    details jsonb NOT NULL,
-    PRIMARY KEY (id)
-);
 
-CREATE TABLE IF NOT EXISTS system.verify_email
-(
-    user_id bigint NOT NULL,
-    code character varying(64) NOT NULL,
-    expiry timestamp without time zone NOT NULL
-);
+ALTER TABLE IF EXISTS system.script_nodes
+    ADD FOREIGN KEY (redis_node)
+    REFERENCES system.redis_nodes (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
 
-CREATE TABLE IF NOT EXISTS scripts.scripts
-(
-    id bigserial NOT NULL,
-    name character varying(128) NOT NULL,
-    throttle bigint NOT NULL,
-    max_runs bigint NOT NULL,
-    pause_at jsonb NOT NULL,
-    scale jsonb NOT NULL,
-    logs jsonb NOT NULL,
-    executor_type character varying(8) NOT NULL,
-    executor_config jsonb NOT NULL,
-    max_runtime bigint NOT NULL,
-    step_max_runtime bigint NOT NULL,
-    secrets jsonb NOT NULL,
-    linked_type character varying(8) NOT NULL,
-    linked_id bigint NOT NULL,
-    created_by bigint NOT NULL,
-    updated_by bigint NOT NULL,
-    created_at timestamp with time zone NOT NULL,
-    updated_at timestamp with time zone NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS system.redis_nodes
-(
-    id bigserial NOT NULL,
-    host inet NOT NULL,
-    created_at timestamp NOT NULL,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS system.script_nodes
-(
-    redis_node bigint NOT NULL,
-    script_id bigint NOT NULL
-);
 
 ALTER TABLE IF EXISTS system.script_nodes
     ADD FOREIGN KEY (script_id)
@@ -328,9 +346,10 @@ ALTER TABLE IF EXISTS system.script_nodes
     ON DELETE NO ACTION
     NOT VALID;
 
-ALTER TABLE IF EXISTS system.script_nodes
-    ADD FOREIGN KEY (redis_node)
-    REFERENCES system.redis_nodes (id) MATCH SIMPLE
+
+ALTER TABLE IF EXISTS scripts.script_access
+    ADD FOREIGN KEY (script_id)
+    REFERENCES scripts.scripts (id) MATCH SIMPLE
     ON UPDATE NO ACTION
     ON DELETE NO ACTION
     NOT VALID;

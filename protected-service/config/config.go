@@ -13,6 +13,8 @@ type Config struct {
 	BodyLimit      int    `env:"BODY_LIMIT" envDefault:"1048576"`
 	AppName        string `env:"APP_NAME" envDefault:"Automate"`
 	IsProduction   bool   `env:"PRODUCTION"`
+	Dsn            string `env:"DSN"`
+	JwtPublicKey   string `env:"JWT_PUBLIC_KEY"`
 }
 
 func Parse() (*Config, error) {

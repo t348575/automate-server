@@ -51,6 +51,18 @@
                 "-env",
                 "${workspaceFolder}/dev/env/script-service.dev.env"
             ]
+        },
+        {
+            "name": "protected-service",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "protected-service",
+            "args": [
+                "-dev",
+                "-env",
+                "${workspaceFolder}/dev/env/protected-service.dev.env"
+            ]
         }
     ]
 }

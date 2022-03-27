@@ -4,8 +4,8 @@ import (
 	"github.com/automate/automate-server/general-service/config"
 	"github.com/automate/automate-server/general-service/providers/email"
 	"github.com/automate/automate-server/general-service/providers/google"
-	"github.com/automate/automate-server/general-service/repos"
 	"github.com/automate/automate-server/models"
+	"github.com/automate/automate-server/repos"
 	"github.com/gofiber/fiber/v2"
 )
 

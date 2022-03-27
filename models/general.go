@@ -15,3 +15,8 @@ type SendEmailConfig struct {
 	ReplaceVars   []map[string]string `json:"replace_vars,omitempty" validate:"required,dive,dive,required,min=1,max=1024"`
 	ReplaceFromDb bool                `json:"replace_from_db,omitempty"`
 }
+
+type NewScriptRoom struct {
+	ScriptId int64 `json:"script_id" validate:"required,number,min=1"`
+	User     int64 `json:"user_id" validate:"required,number,min=1"`
+}

@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/automate/automate-server/general-service/config"
-	"github.com/automate/automate-server/general-service/repos"
 	"github.com/automate/automate-server/models/rbac"
+	"github.com/automate/automate-server/repos"
 	"github.com/automate/automate-server/utils-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -18,9 +18,8 @@ type RbacController struct {
 	UserRepo *repos.UserRepo
 }
 
-func RegisterRbacController(r *utils.Router, config *config.Config, db *bun.DB, c RbacController) {
-
-	r.Post("/rbac/create", utils.Protected(utils.JwtMiddlewareConfig{
+func RegisterRbacController(app *fiber.App, config *config.Config, db *bun.DB, c RbacController) {
+	app.Post("/rbac/create", utils.Protected(utils.JwtMiddlewareConfig{
 		ReadFrom: "header",
 		Subject:  "access",
 		Scopes:   []string{"basic"},

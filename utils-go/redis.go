@@ -3,7 +3,7 @@ package utils
 import "github.com/go-redis/redis/v8"
 
 type RedisConfig struct {
-	RedisUrl string `env:"RedisUrl"`
+	RedisUrl string `env:"REDIS_URL"`
 }
 
 func ProvideRedis(config *RedisConfig) (*redis.Client, error) {
